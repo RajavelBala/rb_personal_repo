@@ -1,0 +1,175 @@
+<mxfile host="Electron" agent="Cloud Provisioning Portal Demo">
+  <diagram id="portal-architecture" name="Portal Architecture">
+    <mxGraphModel dx="1644" dy="978" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zone-users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#DCE3ED;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="760" width="190" x="30" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-portal" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#DCE3ED;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="760" width="310" x="245" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-services" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#DCE3ED;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="760" width="440" x="580" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="zone-external" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F7F9FC;strokeColor=#DCE3ED;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="760" width="520" x="1045" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#17263B;strokeColor=none;fillColor=none;" value="AUTOMATED CLOUD PROVISIONING PORTAL" vertex="1">
+          <mxGeometry height="40" width="800" x="35" y="25" as="geometry" />
+        </mxCell>
+        <mxCell id="subtitle" parent="1" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontColor=#6F7E92;strokeColor=none;fillColor=none;" value="Governed self-service · proposed end-state architecture · highlighted stories are implemented in the local demo" vertex="1">
+          <mxGeometry height="25" width="1100" x="37" y="66" as="geometry" />
+        </mxCell>
+        <mxCell id="head-users" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#55657B;strokeColor=none;fillColor=none;" value="PEOPLE &amp; TEAMS" vertex="1">
+          <mxGeometry height="25" width="150" x="48" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="head-portal" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#55657B;strokeColor=none;fillColor=none;" value="SELF-SERVICE PORTAL" vertex="1">
+          <mxGeometry height="25" width="250" x="263" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="head-services" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#55657B;strokeColor=none;fillColor=none;" value="PLATFORM SERVICES" vertex="1">
+          <mxGeometry height="25" width="250" x="598" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="head-external" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=12;fontStyle=1;fontColor=#55657B;strokeColor=none;fillColor=none;" value="ENTERPRISE SYSTEMS &amp; CLOUD" vertex="1">
+          <mxGeometry height="25" width="350" x="1063" y="125" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-top" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#315CC5;fontSize=10;fontStyle=1;arcSize=8;" value="TOP 5 · IMPLEMENTED DEMO STORY" vertex="1">
+          <mxGeometry height="28" width="205" x="1170" y="29" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-future" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#64748B;fontSize=10;fontStyle=1;arcSize=8;" value="FUTURE BACKLOG STORY" vertex="1">
+          <mxGeometry height="28" width="165" x="1390" y="29" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1" edge="1" parent="1" source="actors" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;strokeWidth=2;endArrow=block;endFill=1;" target="portal-home">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-1a" edge="1" parent="1" source="portal-home" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="portal-request">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-2" edge="1" parent="1" source="portal-request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;strokeWidth=2;endArrow=block;endFill=1;" target="orchestrator">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3" edge="1" parent="1" source="orchestrator" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6484D9;strokeWidth=2;endArrow=block;endFill=1;" target="identity">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-3a" edge="1" parent="1" source="identity" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6484D9;endArrow=block;endFill=1;" target="sso">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4" edge="1" parent="1" source="orchestrator" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6484D9;strokeWidth=2;endArrow=block;endFill=1;" target="policy">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-4a" edge="1" parent="1" source="orchestrator" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="cost">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-5" edge="1" parent="1" source="policy" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#6484D9;strokeWidth=2;endArrow=block;endFill=1;" target="iac">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-6" edge="1" parent="1" source="iac" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;strokeWidth=2;endArrow=block;endFill=1;" target="cloud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-7" edge="1" parent="1" source="ttl" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="cloud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-8" edge="1" parent="1" source="secrets" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="vault">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-9" edge="1" parent="1" source="cost" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="billing">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-10" edge="1" parent="1" source="monitor" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="telemetry">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-11" edge="1" parent="1" source="audit" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="logstore">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-12" edge="1" parent="1" source="portal-dashboard" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="cloud">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-13" edge="1" parent="1" source="portal-extension" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="ttl">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge-14" edge="1" parent="1" source="portal-teardown" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#8192AA;endArrow=block;endFill=1;" target="orchestrator">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="actors" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#C9D3E0;fontColor=#36475E;fontSize=12;align=left;verticalAlign=top;spacing=14;arcSize=8;" value="&lt;b&gt;Internal users&lt;/b&gt;&lt;br&gt;&lt;br&gt;Developers&lt;br&gt;Project leads&lt;br&gt;Security administrators&lt;br&gt;Platform engineers&lt;br&gt;QA engineers&lt;br&gt;Application owners&lt;br&gt;Compliance auditors" vertex="1">
+          <mxGeometry height="205" width="155" x="48" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="actor-boundary" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FA;strokeColor=#DCE3ED;fontColor=#63728A;fontSize=11;align=center;arcSize=8;" value="Team and role context&lt;br&gt;travels with each request" vertex="1">
+          <mxGeometry height="65" width="155" x="48" y="405" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-home" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Catalog &amp; blueprint selection&lt;/b&gt;&lt;br&gt;US-01 · approved templates" vertex="1">
+          <mxGeometry height="65" width="275" x="263" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-request" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Environment request experience&lt;/b&gt;&lt;br&gt;US-02 · parameters, status, results" vertex="1">
+          <mxGeometry height="65" width="275" x="263" y="260" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Resource dashboard&lt;/b&gt;&lt;br&gt;US-07 · cost, health, owner, status" vertex="1">
+          <mxGeometry height="65" width="275" x="263" y="345" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-extension" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Environment extension workflow&lt;/b&gt;&lt;br&gt;US-08 · request a 7-day extension" vertex="1">
+          <mxGeometry height="65" width="275" x="263" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-teardown" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Self-service teardown action&lt;/b&gt;&lt;br&gt;US-11 · safe, immediate destroy" vertex="1">
+          <mxGeometry height="65" width="275" x="263" y="515" as="geometry" />
+        </mxCell>
+        <mxCell id="portal-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FA;strokeColor=#DCE3ED;fontColor=#63728A;fontSize=11;align=center;arcSize=8;" value="Authenticated web UI&lt;br&gt;Team-scoped views and actions&lt;br&gt;Status and lifecycle notifications" vertex="1">
+          <mxGeometry height="90" width="275" x="263" y="620" as="geometry" />
+        </mxCell>
+        <mxCell id="orchestrator" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF2FF;strokeColor=#7995DD;fontColor=#314F9E;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Request orchestrator&lt;/b&gt;&lt;br&gt;Validates, queues, coordinates deployment" vertex="1">
+          <mxGeometry height="72" width="195" x="598" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="identity" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Identity &amp; access gateway · US-04&lt;/b&gt;&lt;br&gt;Enterprise SSO · RBAC · team boundaries" vertex="1">
+          <mxGeometry height="72" width="190" x="810" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="policy" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Policy-as-code gate · US-06&lt;/b&gt;&lt;br&gt;Scan templates and request parameters; block violations" vertex="1">
+          <mxGeometry height="82" width="195" x="598" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="iac" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EDF2FF;strokeColor=#7995DD;fontColor=#314F9E;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;IaC template runner&lt;/b&gt;&lt;br&gt;Versioned, approved infrastructure blueprints" vertex="1">
+          <mxGeometry height="82" width="190" x="810" y="275" as="geometry" />
+        </mxCell>
+        <mxCell id="ttl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;TTL lifecycle controller · US-05&lt;/b&gt;&lt;br&gt;Defaults, alerts, expiration, teardown" vertex="1">
+          <mxGeometry height="75" width="195" x="598" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="cost" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Cost estimator &amp; approvals · US-03&lt;/b&gt;&lt;br&gt;Estimate and route over-budget requests" vertex="1">
+          <mxGeometry height="75" width="190" x="810" y="385" as="geometry" />
+        </mxCell>
+        <mxCell id="secrets" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Credential broker · US-09&lt;/b&gt;&lt;br&gt;Generate, encrypt, inject secrets" vertex="1">
+          <mxGeometry height="72" width="195" x="598" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="monitor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Health &amp; drift monitor · US-10&lt;/b&gt;&lt;br&gt;Detect configuration drift; notify owners" vertex="1">
+          <mxGeometry height="72" width="190" x="810" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Audit event service · US-12&lt;/b&gt;&lt;br&gt;Record request, approval, change, delete" vertex="1">
+          <mxGeometry height="72" width="195" x="598" y="595" as="geometry" />
+        </mxCell>
+        <mxCell id="service-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FA;strokeColor=#DCE3ED;fontColor=#63728A;fontSize=11;align=center;arcSize=8;" value="Automated workflow:&lt;br&gt;authenticate → authorize → estimate / approve → scan → deploy → manage lifecycle&lt;br&gt;&lt;br&gt;Events feed monitoring, audit and reporting" vertex="1">
+          <mxGeometry height="92" width="190" x="810" y="595" as="geometry" />
+        </mxCell>
+        <mxCell id="sso" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Enterprise identity provider&lt;/b&gt;&lt;br&gt;SSO / OIDC / SAML&lt;br&gt;Groups and role claims" vertex="1">
+          <mxGeometry height="82" width="230" x="1063" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="cloud" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FA;strokeColor=#AAB6C6;fontColor=#3E5067;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Governed cloud accounts&lt;/b&gt;&lt;br&gt;Network / compute / database / containers&lt;br&gt;Sandbox, test, staging scopes" vertex="1">
+          <mxGeometry height="82" width="215" x="1320" y="175" as="geometry" />
+        </mxCell>
+        <mxCell id="vault" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Enterprise secrets vault&lt;/b&gt;&lt;br&gt;Encrypted credentials and access" vertex="1">
+          <mxGeometry height="72" width="230" x="1063" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="billing" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Cloud cost / billing API&lt;/b&gt;&lt;br&gt;Rate cards, estimates, actual spend" vertex="1">
+          <mxGeometry height="72" width="215" x="1320" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="telemetry" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Metrics &amp; configuration data&lt;/b&gt;&lt;br&gt;Health status and desired-state comparison" vertex="1">
+          <mxGeometry height="72" width="230" x="1063" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="logstore" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Central audit log / SIEM&lt;/b&gt;&lt;br&gt;Retention, search and compliance export" vertex="1">
+          <mxGeometry height="72" width="215" x="1320" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="integration-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFF8E8;strokeColor=#E8D8AA;fontColor=#755E2E;fontSize=11;align=center;arcSize=8;" value="Provider adapters isolate the portal from cloud-specific APIs.&lt;br&gt;Production deployment requires organization-approved identity, network, policy, and cloud integrations." vertex="1">
+          <mxGeometry height="82" width="472" x="1063" y="565" as="geometry" />
+        </mxCell>
+        <mxCell id="footer" parent="1" style="text;html=1;align=left;verticalAlign=middle;fontSize=10;fontColor=#748198;strokeColor=none;fillColor=none;" value="US-01 Catalog · US-02 Provision · US-03 Cost / approval · US-04 SSO / RBAC · US-05 TTL · US-06 Policy scan · US-07 Dashboard · US-08 Extension · US-09 Secrets · US-10 Drift · US-11 Teardown · US-12 Audit" vertex="1">
+          <mxGeometry height="28" width="1450" x="48" y="875" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101d31">
+  <title>Cloud Launchpad | ABC Corp</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#" aria-label="Cloud Launchpad home">
+      <svg class="brand-mark" viewBox="0 0 48 48" role="img" aria-label="ABC Corp logo">
+        <defs>
+          <linearGradient id="abc-mark-gradient" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#3d78f4"/>
+            <stop offset="1" stop-color="#244db6"/>
+          </linearGradient>
+        </defs>
+        <rect x="1" y="1" width="46" height="46" rx="14" fill="url(#abc-mark-gradient)"/>
+        <text x="24" y="30" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="-.7">ABC</text>
+      </svg>
+      <span class="brand-copy"><strong>ABC Corp</strong><small>AUTOMATED CLOUD PROVISIONING PORTAL</small></span>
+    </a>
+    <div id="session-area" class="session-area"></div>
+  </header>
+
+  <main id="app" class="page-shell">
+    <section id="login-screen" class="login-layout">
+      <div class="intro-panel">
+        <p class="eyebrow">SELF-SERVICE INFRASTRUCTURE</p>
+        <h1>Build what you need.<br><span>Stay within guardrails.</span></h1>
+        <p class="intro-copy">A governed launchpad for approved development environments. Choose a blueprint and let the platform handle the checks.</p>
+        <div class="intro-points">
+          <span><i class="point-icon point-blue"></i>Approved blueprints</span>
+          <span><i class="point-icon point-green"></i>Policy-checked launches</span>
+          <span><i class="point-icon point-violet"></i>Automatic expiration</span>
+        </div>
+        <p class="demo-note">Interactive class demo · Cloud resources are simulated</p>
+      </div>
+      <section class="login-card" aria-labelledby="login-title">
+        <div class="card-icon" aria-hidden="true">↗</div>
+        <p class="eyebrow">DEMO IDENTITY PROVIDER</p>
+        <h2 id="login-title">Welcome to Launchpad</h2>
+        <p class="muted">Choose a seeded account to demonstrate enterprise sign-in and access boundaries. No password is required.</p>
+        <label for="account-select">Demo account</label>
+        <select id="account-select"></select>
+        <button id="login-button" class="button button-primary button-full">Continue with demo SSO <span aria-hidden="true">→</span></button>
+        <p class="login-footnote">Mock SSO · No credentials are collected</p>
+      </section>
+    </section>
+
+    <section id="workspace" class="hidden">
+      <div class="welcome-row">
+        <div>
+          <p class="eyebrow">ENGINEERING WORKSPACE</p>
+          <h1 id="welcome-title">Your environments</h1>
+          <p id="welcome-subtitle" class="muted"></p>
+        </div>
+        <div id="manager-controls"></div>
+      </div>
+
+      <div id="notice-area" aria-live="polite"></div>
+      <div id="policy-flash" aria-live="polite"></div>
+
+      <div class="workspace-grid">
+        <section class="panel catalog-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">START WITH A BLUEPRINT</p><h2>Approved catalog</h2></div>
+            <span class="count-pill">03 TEMPLATES</span>
+          </div>
+          <div id="catalog-list" class="catalog-list"></div>
+        </section>
+
+        <section class="panel request-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">NEW REQUEST</p><h2>Configure environment</h2></div>
+            <span class="step-mark">01 <span>/</span> 03</span>
+          </div>
+          <form id="request-form">
+            <label>Selected blueprint</label>
+            <div id="selected-template" class="selected-template"></div>
+            <label for="environment-name">Environment name</label>
+            <input id="environment-name" name="environmentName" required maxlength="32" placeholder="e.g. checkout-api">
+            <span class="field-hint">Lowercase letters, numbers, and hyphens; start with a letter.</span>
+            <div class="form-row">
+              <div>
+                <label for="cloud-provider">Cloud provider</label>
+                <select id="cloud-provider" name="cloudProvider">
+                  <option value="aws">AWS</option>
+                  <option value="azure">Azure</option>
+                  <option value="gcp">GCP</option>
+                </select>
+              </div>
+              <div>
+                <label for="region">Region</label>
+                <select id="region" name="region"></select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div>
+                <label for="lifetime">Lifetime</label>
+                <select id="lifetime" name="lifetime"></select>
+              </div>
+              <div class="estimate-card" aria-live="polite">
+                <span class="estimate-label">Estimated cost</span>
+                <strong id="daily-estimate">$0.00 <small>/ day</small></strong>
+                <span id="total-estimate" class="estimate-total"></span>
+                <span class="estimate-disclaimer">Demo estimate · not live pricing</span>
+              </div>
+            </div>
+            <label class="checkbox-label" for="public-ingress">
+              <input id="public-ingress" name="publicIngress" type="checkbox">
+              <span>Allow public inbound access <small>Included to demonstrate a policy violation</small></span>
+            </label>
+            <button id="submit-request" class="button button-primary button-full" type="submit">Run checks &amp; provision <span aria-hidden="true">→</span></button>
+            <p class="form-footnote"><span aria-hidden="true">⛨</span> Every request is checked before deployment.</p>
+          </form>
+        </section>
+      </div>
+
+      <section class="panel environments-panel">
+        <div class="panel-heading">
+          <div><p class="eyebrow">REQUEST HISTORY</p><h2 id="environment-heading">Your environments</h2></div>
+          <span id="environment-count" class="count-pill">0 ENVIRONMENTS</span>
+        </div>
+        <div id="environment-list"></div>
+      </section>
+      <section id="security-policy-section" class="panel security-policies-panel hidden" aria-labelledby="security-policies-title">
+        <div class="panel-heading">
+          <div><p class="eyebrow">SECURITY ADMINISTRATION</p><h2 id="security-policies-title">Security &amp; compliance policies</h2></div>
+          <span id="policy-count" class="count-pill"></span>
+        </div>
+        <p class="policy-intro">Review and maintain the demo guardrails. The public ingress policy is enforced during provisioning checks; other policy entries are managed as demo policy records.</p>
+        <div id="security-policy-list" class="security-policy-list"></div>
+        <form id="policy-form" class="policy-editor">
+          <h3 id="policy-form-heading">Add a policy</h3>
+          <div class="form-row">
+            <div>
+              <label for="policy-name">Policy name</label>
+              <input id="policy-name" name="policyName" required maxlength="60" placeholder="e.g. Require encrypted storage">
+            </div>
+            <div>
+              <label for="policy-category">Category</label>
+              <select id="policy-category" name="policyCategory">
+                <option value="Access control">Access control</option>
+                <option value="Network security">Network security</option>
+                <option value="Data protection">Data protection</option>
+                <option value="Lifecycle">Lifecycle</option>
+                <option value="Compliance">Compliance</option>
+              </select>
+            </div>
+          </div>
+          <label for="policy-description">Description</label>
+          <textarea id="policy-description" name="policyDescription" required maxlength="240" rows="2" placeholder="Describe what the policy requires."></textarea>
+          <div class="policy-editor-actions">
+            <button id="policy-submit" class="button button-primary" type="submit">Add policy</button>
+            <button id="policy-cancel" class="button-secondary hidden" type="button">Cancel edit</button>
+          </div>
+        </form>
+      </section>
+      <footer class="page-footer">Demo mode · No cloud resources are created <span id="demo-clock"></span><button id="reset-button" class="text-button">Reset demo data</button></footer>
+    </section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
