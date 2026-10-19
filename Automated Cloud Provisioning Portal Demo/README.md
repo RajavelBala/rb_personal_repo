@@ -22,13 +22,14 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 
 ## Suggested demo walkthrough
 
-1. Sign in as **Harry Potter (Team Atlas)** using the mock SSO selector. No password is used.
+1. Sign in as **Jim Halpert (Team Atlas)** using the mock SSO selector. No password is used.
 2. Browse the three approved templates and submit a compliant request. The deployment status changes from queued to provisioned.
 3. Submit another request with **Public inbound access** enabled. The policy gate displays the violation and blocks provisioning.
-4. Review the environment's expiration time. Sign out and sign in as **Albus Dumbledore**, then use **Advance demo clock by 1 day** to demonstrate lifecycle alerts and automatic teardown. Repeat as needed to pass the expiration time.
-5. Sign in as **Rubeus Hagrid** to demonstrate role-based access boundaries and cross-team read-only visibility.
-6. Sign in as **Hermione Granger (Team Nova)** to verify team isolation.
-7. **Ron Weasley (Team Atlas)** is a second developer account for testing shared team visibility.
+4. Review the environment's expiration time. Sign out and sign in as **Michael Scott (Team Atlas)**, then use **Advance demo clock by 1 day** to demonstrate lifecycle alerts and automatic teardown. Repeat as needed to pass the expiration time.
+5. Sign in as **Dwight Schrute** to demonstrate role-based access boundaries, policy administration, and cross-team read-only visibility.
+6. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
+7. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.
+8. **Andy Bernard (Team Nova)** is a manager for Team Nova. Managers see requests from their own team only; sign in as Michael and Andy to compare team-scoped views.
 
 ## Stories included
 
@@ -39,7 +40,7 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 - **US-05 — TTL Lifecycle:** Select a 30-, 60-, or 90-day lifetime, see expiration warnings, and demonstrate automatic decommissioning with simulated clock advancement.
 - Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing.
 - Expand a created environment's **View resources** row to see its simulated compute, storage, network, and related resource inventory.
-- Sign in as **Rubeus Hagrid** to review, add, edit, and enable/disable security and compliance policy records. The public-ingress policy is wired to the demo provisioning gate; the other entries are illustrative policy records.
+- Sign in as **Dwight Schrute** to review, add, edit, and enable/disable security and compliance policy records. The public-ingress policy is wired to the demo provisioning gate; the other entries are illustrative policy records.
 
 All other stories are shown as future capabilities in `architecture.drawio`; they are not implemented in this demo.
 

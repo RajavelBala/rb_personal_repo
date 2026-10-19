@@ -3,11 +3,12 @@
 
   const STORAGE_KEY = "abc-cloud-launchpad-demo-v1";
   const users = [
-    { id: "ava", name: "Harry Potter", role: "Developer", team: "Team Atlas", initials: "HP" },
-    { id: "noah", name: "Hermione Granger", role: "Developer", team: "Team Nova", initials: "HG" },
-    { id: "sam", name: "Rubeus Hagrid", role: "Security Administrator", team: "Enterprise Security", initials: "RH" },
-    { id: "casey", name: "Albus Dumbledore", role: "Cloud Platform Manager", team: "Platform Operations", initials: "AD" },
-    { id: "ron", name: "Ron Weasley", role: "Developer", team: "Team Atlas", initials: "RW" }
+    { id: "ava", name: "Jim Halpert", role: "Developer", team: "Team Atlas", initials: "JH" },
+    { id: "ron", name: "Oscar Martinez", role: "Developer", team: "Team Atlas", initials: "OM" },
+    { id: "casey", name: "Michael Scott", role: "Manager", team: "Team Atlas", initials: "MS" },
+    { id: "noah", name: "Pam Beesly", role: "Developer", team: "Team Nova", initials: "PB" },
+    { id: "andy", name: "Andy Bernard", role: "Manager", team: "Team Nova", initials: "AB" },
+    { id: "sam", name: "Dwight Schrute", role: "Security Administrator", team: "Enterprise Security", initials: "DS" }
   ];
 
   const templates = [
@@ -189,11 +190,11 @@
   }
 
   function canAdvanceClock(user) {
-    return Boolean(user && user.role === "Cloud Platform Manager");
+    return Boolean(user && user.role === "Manager");
   }
 
   function visibleEnvironments(user) {
-    if (user.role === "Security Administrator" || user.role === "Cloud Platform Manager") {
+    if (user.role === "Security Administrator") {
       return [...state.environments];
     }
     return state.environments.filter((environment) => environment.team === user.team);
@@ -590,7 +591,7 @@
     el("login-screen").classList.add("hidden");
     el("workspace").classList.remove("hidden");
     el("welcome-title").textContent = canRequest(user) ? "Your environments" : "Platform workspace";
-    el("welcome-subtitle").textContent = `${user.role} · ${user.team}${canRequest(user) ? " · Team-scoped access" : " · Read-only environment view"}`;
+    el("welcome-subtitle").textContent = `${user.role === "Manager" ? "Manager" : user.role} · ${user.team}${canRequest(user) ? " · Team-scoped access" : " · Team-scoped read-only view"}`;
     renderManagerControls(user);
     renderCatalog(user);
     renderPolicyResult();
