@@ -25,7 +25,7 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 1. Sign in as **Jim Halpert (Team Atlas)** using the mock SSO selector. No password is used.
 2. Browse the three approved templates and submit a compliant request. The deployment status changes from queued to provisioned.
 3. Submit another request with **Public inbound access** enabled. The policy gate displays the violation and blocks provisioning.
-4. Review the environment's expiration time. Sign out and sign in as **Michael Scott (Team Atlas)**, then use **Advance demo clock by 1 day** to demonstrate lifecycle alerts and automatic teardown. Repeat as needed to pass the expiration time.
+4. Review the environment's expiration time and sign in as either manager to see requests for that manager's team. TTL expiration and teardown are based on the displayed real expiration time.
 5. Sign in as **Dwight Schrute** to demonstrate role-based access boundaries, policy administration, and cross-team read-only visibility.
 6. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
 7. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.

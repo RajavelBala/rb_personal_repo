@@ -189,10 +189,6 @@
     return Boolean(user && user.role === "Developer");
   }
 
-  function canAdvanceClock(user) {
-    return Boolean(user && user.role === "Manager");
-  }
-
   function visibleEnvironments(user) {
     if (user.role === "Security Administrator") {
       return [...state.environments];
@@ -572,27 +568,12 @@
     }, 950);
   }
 
-  function renderManagerControls(user) {
-    el("manager-controls").innerHTML = canAdvanceClock(user)
-      ? `<div class="manager-tools"><span>TTL demo controls</span><button id="advance-clock" class="button-secondary" type="button">Advance demo clock by 1 day ↻</button></div>`
-      : "";
-    const advanceButton = el("advance-clock");
-    if (advanceButton) advanceButton.onclick = () => {
-      if (!canAdvanceClock(currentUser())) return;
-      state.clockOffsetMs += 24 * 60 * 60 * 1000;
-      saveState();
-      reconcileLifecycle();
-      renderWorkspace(currentUser());
-    };
-  }
-
   function renderWorkspace(user) {
     renderSession(user);
     el("login-screen").classList.add("hidden");
     el("workspace").classList.remove("hidden");
     el("welcome-title").textContent = canRequest(user) ? "Your environments" : "Platform workspace";
     el("welcome-subtitle").textContent = `${user.role === "Manager" ? "Manager" : user.role} · ${user.team}${canRequest(user) ? " · Team-scoped access" : " · Team-scoped read-only view"}`;
-    renderManagerControls(user);
     renderCatalog(user);
     renderPolicyResult();
     renderEnvironments(user);
