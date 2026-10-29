@@ -71,6 +71,12 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .welcome-row { display: flex; justify-content: space-between; align-items: end; margin-bottom: 23px; }
 .welcome-row h1 { margin-bottom: 4px; font-size: 28px; }
 .welcome-row .muted { margin-bottom: 0; font-size: 13px; }
+.sprint-scope { display: grid; grid-template-columns: minmax(210px, .8fr) 1.8fr; gap: 18px; align-items: center; margin-bottom: 18px; padding: 15px 18px; border: 1px solid #dfe7f6; border-radius: 10px; background: linear-gradient(100deg, #f7f9ff, #fff); }
+.sprint-scope-heading .eyebrow { margin-bottom: 5px; }
+.sprint-scope-heading h2 { margin: 0; color: #29467f; font-size: 16px; }
+.sprint-scope-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.sprint-scope-list span { padding: 7px 9px; border: 1px solid #e0e7f5; border-radius: 20px; color: #53637a; background: #fff; font-size: 10px; white-space: nowrap; }
+.sprint-scope-list strong { margin-right: 3px; color: #4265c4; font-size: 9px; }
 .manager-tools { display: flex; align-items: center; gap: 10px; color: #79869a; font-size: 11px; }
 .button-secondary { padding: 10px 13px; color: #3758a8; background: #edf2ff; border: 1px solid #e2e9ff; border-radius: 6px; font-size: 11px; font-weight: 700; }
 .workspace-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -159,6 +165,7 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .text-button { padding: 3px 5px; border: 0; background: transparent; color: #7487ad; font-size: 10px; }
 .text-button:hover { color: var(--blue); text-decoration: underline; }
 #demo-clock { color: #7788a0; }
+.page-footer #demo-clock { margin-left: 4px; }
 
 @media (max-width: 800px) {
   .login-layout { grid-template-columns: 1fr; gap: 25px; max-width: 520px; margin: auto; }
@@ -166,6 +173,7 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
   .intro-panel h1 { font-size: 37px; }
   .demo-note { margin-top: 25px; }
   .workspace-grid { grid-template-columns: 1fr; }
+  .sprint-scope { grid-template-columns: 1fr; gap: 10px; }
 }
 @media (max-width: 560px) {
   .topbar { height: 64px; padding: 0 16px; }

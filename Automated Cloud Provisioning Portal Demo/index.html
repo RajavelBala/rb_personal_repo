@@ -36,13 +36,13 @@
           <span><i class="point-icon point-green"></i>Policy-checked launches</span>
           <span><i class="point-icon point-violet"></i>Automatic expiration</span>
         </div>
-        <p class="demo-note">Interactive class demo · Cloud resources are simulated</p>
+        <p class="demo-note">Interactive class demo · Sprint 1 scope · Cloud resources are simulated</p>
       </div>
       <section class="login-card" aria-labelledby="login-title">
         <div class="card-icon" aria-hidden="true">↗</div>
-        <p class="eyebrow">DEMO IDENTITY PROVIDER</p>
+        <p class="eyebrow">ENTERPRISE SSO GATEWAY · DEMO</p>
         <h2 id="login-title">Welcome to Launchpad</h2>
-        <p class="muted">Choose a seeded account to demonstrate enterprise sign-in and access boundaries. No password is required.</p>
+        <p class="muted">Choose a seeded account to demonstrate enterprise sign-in and RBAC boundaries. No password is required in this simulation.</p>
         <label for="account-select">Demo account</label>
         <select id="account-select"></select>
         <button id="login-button" class="button button-primary button-full">Continue with demo SSO <span aria-hidden="true">→</span></button>
@@ -58,6 +58,20 @@
           <p id="welcome-subtitle" class="muted"></p>
         </div>
       </div>
+
+      <section class="sprint-scope" aria-labelledby="sprint-scope-title">
+        <div class="sprint-scope-heading">
+          <p class="eyebrow">SPRINT 1 REVIEW SCOPE</p>
+          <h2 id="sprint-scope-title">Governed self-service provisioning</h2>
+        </div>
+        <div class="sprint-scope-list">
+          <span><strong>US-01</strong> Catalog</span>
+          <span><strong>US-02</strong> Provisioning</span>
+          <span><strong>US-04</strong> RBAC &amp; SSO</span>
+          <span><strong>US-05</strong> TTL &amp; cost governance</span>
+          <span><strong>US-06</strong> Policy scanning</span>
+        </div>
+      </section>
 
       <div id="notice-area" aria-live="polite"></div>
       <div id="policy-flash" aria-live="polite"></div>
@@ -102,10 +116,10 @@
                 <select id="lifetime" name="lifetime"></select>
               </div>
               <div class="estimate-card" aria-live="polite">
-                <span class="estimate-label">Estimated cost</span>
+                <span class="estimate-label">Cost governance estimate</span>
                 <strong id="daily-estimate">$0.00 <small>/ day</small></strong>
                 <span id="total-estimate" class="estimate-total"></span>
-                <span class="estimate-disclaimer">Demo estimate · not live pricing</span>
+                <span id="cost-governance-note" class="estimate-disclaimer">Demo estimate · not live pricing</span>
               </div>
             </div>
             <label class="checkbox-label" for="public-ingress">
@@ -158,7 +172,12 @@
           </div>
         </form>
       </section>
-      <footer class="page-footer">Demo mode · No cloud resources are created <span id="demo-clock"></span><button id="reset-button" class="text-button">Reset demo data</button></footer>
+      <footer class="page-footer">
+        <span>Demo mode · No cloud resources are created</span>
+        <span id="demo-clock"></span>
+        <button id="advance-clock-button" class="text-button" type="button">Advance 30 days</button>
+        <button id="reset-button" class="text-button" type="button">Reset demo data</button>
+      </footer>
     </section>
   </main>
   <script src="app.js"></script>

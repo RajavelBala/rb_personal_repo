@@ -2,6 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "abc-cloud-launchpad-demo-v1";
+  const COST_GOVERNANCE_LIMIT = 250;
   const users = [
     { id: "ava", name: "Jim Halpert", role: "Developer", team: "Team Atlas", initials: "JH" },
     { id: "ron", name: "Oscar Martinez", role: "Developer", team: "Team Atlas", initials: "OM" },
@@ -75,6 +76,7 @@
     { id: "block-public-ingress", name: "Block public inbound access", category: "Network security", description: "Prevent public inbound access on demo environments.", enabled: true },
     { id: "approved-regions", name: "Approved cloud regions", category: "Compliance", description: "Provision only in approved provider regions.", enabled: true },
     { id: "environment-ttl", name: "Maximum environment lifetime", category: "Lifecycle", description: "Limit sandbox and test environment lifetime to 90 days.", enabled: true },
+    { id: "cost-governance", name: "Selected-TTL cost limit", category: "Compliance", description: "Block requests whose illustrative cost for the selected lifetime exceeds $250.", enabled: true },
     { id: "team-access", name: "Team-scoped access", category: "Access control", description: "Limit developer access to resources belonging to their assigned team.", enabled: true },
     { id: "encrypted-storage", name: "Encrypt environment storage", category: "Data protection", description: "Require encryption for attached and persistent storage.", enabled: true }
   ];
@@ -135,7 +137,8 @@
           status: item.status === "provisioning" ? "provisioned" : item.status,
           providerId: providers[item.providerId] ? item.providerId : "aws",
           dailyCost: Number.isFinite(item.dailyCost) ? item.dailyCost : providers.aws.dailyRates[item.templateId],
-          resources: Array.isArray(item.resources) ? item.resources : item.status === "blocked" ? [] : resourceInventories[item.templateId]
+          resources: Array.isArray(item.resources) ? item.resources : item.status === "blocked" ? [] : resourceInventories[item.templateId],
+          policyReasons: Array.isArray(item.policyReasons) ? item.policyReasons.filter((reason) => typeof reason === "string") : []
         })) : [],
         clockOffsetMs: Number.isFinite(parsed.clockOffsetMs) && parsed.clockOffsetMs >= 0 ? parsed.clockOffsetMs : 0,
         policyMessage: null
@@ -312,6 +315,10 @@
     const dailyCost = provider.dailyRates[template.id];
     el("daily-estimate").innerHTML = `$${dailyCost.toFixed(2)} <small>/ day</small>`;
     el("total-estimate").textContent = `$${(dailyCost * days).toFixed(2)} estimated for ${days} days`;
+    const costPolicy = state.policies.find((policy) => policy.id === "cost-governance");
+    el("cost-governance-note").textContent = costPolicy?.enabled
+      ? `Demo estimate · $${COST_GOVERNANCE_LIMIT} max per selected TTL`
+      : "Demo estimate · cost limit policy disabled";
   }
 
   function renderPolicyResult() {
@@ -401,6 +408,7 @@
         if (!policy) return;
         policy.enabled = control.checked;
         saveState();
+        renderCatalog(currentUser());
         renderSecurityPolicies(currentUser());
       });
     });
@@ -483,6 +491,12 @@
     const ingressPolicy = state.policies.find((policy) => policy.id === "block-public-ingress");
     if (data.publicIngress && ingressPolicy?.enabled) {
       messages.push(`${ingressPolicy.name} policy prevents public inbound access.`);
+    }
+    const costPolicy = state.policies.find((policy) => policy.id === "cost-governance");
+    const dailyCost = provider?.dailyRates[template?.id];
+    const selectedTtlCost = dailyCost * data.lifetimeDays;
+    if (costPolicy?.enabled && Number.isFinite(selectedTtlCost) && selectedTtlCost > COST_GOVERNANCE_LIMIT) {
+      messages.push(`${costPolicy.name} policy limits the selected TTL estimate to $${COST_GOVERNANCE_LIMIT}; this request is estimated at $${selectedTtlCost.toFixed(2)}.`);
     }
     return { pass: messages.length === 0, messages: messages.length ? messages : ["Approved blueprint, provider region, naming, and lifetime rules verified."] };
   }
@@ -599,6 +613,11 @@
       localStorage.removeItem(STORAGE_KEY);
       state = loadState();
       notice = null;
+      render();
+    };
+    el("advance-clock-button").onclick = () => {
+      state.clockOffsetMs += 30 * 24 * 60 * 60 * 1000;
+      saveState();
       render();
     };
   }
