@@ -2,7 +2,7 @@
   "use strict";
 
   const STORAGE_KEY = "abc-cloud-launchpad-demo-v1";
-  const COST_GOVERNANCE_LIMIT = 250;
+  const MONTHLY_APPROVAL_THRESHOLD = 500;
   const users = [
     { id: "ava", name: "Jim Halpert", role: "Developer", team: "Team Atlas", initials: "JH" },
     { id: "ron", name: "Oscar Martinez", role: "Developer", team: "Team Atlas", initials: "OM" },
@@ -28,7 +28,7 @@
         { id: "us-west-2", name: "US West (Oregon)" },
         { id: "eu-west-1", name: "EU West (Ireland)" }
       ],
-      dailyRates: { node: 4.82, python: 8.64, kubernetes: 12.48 }
+      dailyRates: { node: 4.82, python: 8.64, kubernetes: 18.2 }
     },
     azure: {
       name: "Azure",
@@ -38,7 +38,7 @@
         { id: "westus2", name: "West US 2 (Washington)" },
         { id: "westeurope", name: "West Europe (Netherlands)" }
       ],
-      dailyRates: { node: 5.06, python: 9.12, kubernetes: 13.02 }
+      dailyRates: { node: 5.06, python: 9.12, kubernetes: 19.1 }
     },
     gcp: {
       name: "GCP",
@@ -48,7 +48,7 @@
         { id: "us-west1", name: "US West (Oregon)" },
         { id: "europe-west1", name: "Europe West (Belgium)" }
       ],
-      dailyRates: { node: 4.61, python: 8.27, kubernetes: 11.93 }
+      dailyRates: { node: 4.61, python: 8.27, kubernetes: 17.25 }
     }
   };
 
@@ -80,7 +80,7 @@
     { id: "block-public-ingress", name: "Block public inbound access", category: "Network security", description: "Prevent public inbound access on demo environments.", enabled: true },
     { id: "approved-regions", name: "Approved cloud regions", category: "Compliance", description: "Provision only in approved provider regions.", enabled: true },
     { id: "environment-ttl", name: "Maximum environment lifetime", category: "Lifecycle", description: "Limit sandbox and test environment lifetime to 90 days.", enabled: true },
-    { id: "cost-governance", name: "Selected-TTL cost limit", category: "Compliance", description: "Block requests whose illustrative cost for the selected lifetime exceeds $250.", enabled: true },
+    { id: "cost-governance", name: "Monthly budget approval", category: "Compliance", description: "Route requests above $500 per month to the requester's team manager before provisioning.", enabled: true },
     { id: "team-access", name: "Team-scoped access", category: "Access control", description: "Limit developer access to resources belonging to their assigned team.", enabled: true },
     { id: "encrypted-storage", name: "Encrypt environment storage", category: "Data protection", description: "Require encryption for attached and persistent storage.", enabled: true }
   ];
@@ -97,15 +97,19 @@
         .filter((policy) => policy && typeof policy.id === "string")
         .map((policy) => [policy.id, policy])
     );
-    const normalize = (policy, saved) => ({
-      ...policy,
-      name: typeof saved?.name === "string" && saved.name.trim() ? saved.name.trim().slice(0, 60) : policy.name,
-      category: policyCategories.includes(saved?.category) ? saved.category : policy.category,
-      description: typeof saved?.description === "string" && saved.description.trim()
-        ? saved.description.trim().slice(0, 240)
-        : policy.description,
-      enabled: typeof saved?.enabled === "boolean" ? saved.enabled : policy.enabled
-    });
+    const normalize = (policy, saved) => {
+      const legacyCostLimit = policy.id === "cost-governance" && saved &&
+        (saved.name === "Selected-TTL cost limit" || /\$250|selected.ttl/i.test(saved.description || ""));
+      return {
+        ...policy,
+        name: !legacyCostLimit && typeof saved?.name === "string" && saved.name.trim() ? saved.name.trim().slice(0, 60) : policy.name,
+        category: policyCategories.includes(saved?.category) ? saved.category : policy.category,
+        description: !legacyCostLimit && typeof saved?.description === "string" && saved.description.trim()
+          ? saved.description.trim().slice(0, 240)
+          : policy.description,
+        enabled: typeof saved?.enabled === "boolean" ? saved.enabled : policy.enabled
+      };
+    };
     const policies = defaultPolicies.map((policy) => normalize(policy, savedById.get(policy.id)));
     const defaultIds = new Set(defaultPolicies.map((policy) => policy.id));
     for (const saved of savedById.values()) {
@@ -135,13 +139,13 @@
           item && typeof item.id === "string" && typeof item.name === "string" &&
           templates.some((template) => template.id === item.templateId) &&
           users.some((user) => user.id === item.ownerId) &&
-          ["provisioning", "provisioned", "blocked", "decommissioned"].includes(item.status))
+          ["provisioning", "provisioned", "pending-approval", "rejected", "blocked", "decommissioned"].includes(item.status))
         .map((item) => ({
           ...item,
           status: item.status === "provisioning" ? "provisioned" : item.status,
           providerId: providers[item.providerId] ? item.providerId : "aws",
           dailyCost: Number.isFinite(item.dailyCost) ? item.dailyCost : providers.aws.dailyRates[item.templateId],
-          resources: Array.isArray(item.resources) ? item.resources : item.status === "blocked" ? [] : resourceInventories[item.templateId],
+          resources: Array.isArray(item.resources) ? item.resources : ["blocked", "pending-approval", "rejected"].includes(item.status) ? [] : resourceInventories[item.templateId],
           policyReasons: Array.isArray(item.policyReasons) ? item.policyReasons.filter((reason) => typeof reason === "string") : []
         })) : [],
         clockOffsetMs: Number.isFinite(parsed.clockOffsetMs) && parsed.clockOffsetMs >= 0 ? parsed.clockOffsetMs : 0,
@@ -194,6 +198,15 @@
 
   function canRequest(user) {
     return Boolean(user && user.role === "Developer");
+  }
+
+  function canApprove(user, environment) {
+    return Boolean(user && user.role === "Manager" && environment &&
+      user.team === environment.team && environment.approvalManagerId === user.id);
+  }
+
+  function teamManager(team) {
+    return users.find((user) => user.role === "Manager" && user.team === team);
   }
 
   function visibleEnvironments(user) {
@@ -317,12 +330,17 @@
     const provider = providers[state.selectedProviderId];
     const days = Number(el("lifetime").value) || template.defaultDays;
     const dailyCost = provider.dailyRates[template.id];
+    const monthlyCost = dailyCost * 30;
     el("daily-estimate").innerHTML = `$${dailyCost.toFixed(2)} <small>/ day</small>`;
+    el("monthly-estimate").textContent = `$${monthlyCost.toFixed(2)} estimated per month`;
     el("total-estimate").textContent = `$${(dailyCost * days).toFixed(2)} estimated for ${days} days`;
-    const costPolicy = state.policies.find((policy) => policy.id === "cost-governance");
-    el("cost-governance-note").textContent = costPolicy?.enabled
-      ? `Demo estimate · $${COST_GOVERNANCE_LIMIT} max per selected TTL`
-      : "Demo estimate · cost limit policy disabled";
+    const approvalPolicy = state.policies.find((policy) => policy.id === "cost-governance");
+    el("cost-governance-note").textContent = approvalPolicy?.enabled
+      ? `Demo estimate · manager approval required above $${MONTHLY_APPROVAL_THRESHOLD}/month`
+      : "Demo estimate · monthly budget approval policy disabled";
+    el("submit-request").innerHTML = approvalPolicy?.enabled && monthlyCost > MONTHLY_APPROVAL_THRESHOLD
+      ? 'Run checks &amp; request approval <span aria-hidden="true">→</span>'
+      : 'Run checks &amp; provision <span aria-hidden="true">→</span>';
   }
 
   function renderPolicyResult() {
@@ -352,25 +370,33 @@
       const status = lifecycleStatus(environment);
       const statusLabels = {
         provisioning: "Provisioning", provisioned: "Provisioned", blocked: "Blocked",
+        "pending-approval": "Pending approval", rejected: "Rejected",
         expiring: "Expiring soon", decommissioned: "Decommissioned"
       };
       const detail = status === "blocked"
         ? environment.policyReasons.join("; ")
-        : status === "decommissioned"
-          ? `Expired ${formatDate(environment.decommissionedAt)}`
-          : `Expires ${formatDate(environment.expiresAt)}`;
+        : status === "pending-approval"
+          ? `Awaiting ${escapeHTML((teamManager(environment.team) || {}).name || "team manager")} · $${(Number(environment.dailyCost) * 30).toFixed(2)} / month`
+          : status === "rejected"
+            ? `Rejected by ${escapeHTML(environment.managerDecisionBy || "team manager")}${environment.managerDecisionAt ? ` · ${formatDate(environment.managerDecisionAt)}` : ""}`
+            : status === "decommissioned"
+              ? `Expired ${formatDate(environment.decommissionedAt)}`
+              : `Expires ${formatDate(environment.expiresAt)}`;
       const resources = environment.resources || [];
-      const resourceDetails = status === "blocked"
-        ? `<div class="resource-empty">No resources created; the policy gate blocked this request.</div>`
+      const resourceDetails = status === "blocked" || status === "pending-approval" || status === "rejected"
+        ? `<div class="resource-empty">${status === "blocked" ? "No resources created; the policy gate blocked this request." : status === "pending-approval" ? "No resources created until a manager approves." : "No resources created; the manager rejected this request."}</div>`
         : `<details class="resource-details">
             <summary>View resources (${resources.length})</summary>
             <ul>${resources.map((resource) => `<li><strong>${escapeHTML(resource.name)}</strong><span>${escapeHTML(resource.detail)}</span></li>`).join("")}</ul>
           </details>`;
+      const approvalActions = status === "pending-approval" && canApprove(user, environment)
+        ? `<div class="approval-actions"><button type="button" class="button button-approve" data-approve="${escapeHTML(environment.id)}">Approve &amp; provision</button><button type="button" class="button button-reject" data-reject="${escapeHTML(environment.id)}">Reject</button></div>`
+        : "";
       return `<tr>
         <td><span class="env-name">${escapeHTML(environment.name)}</span><span class="env-meta">${escapeHTML(provider.name)} · ${escapeHTML(template.name)} · ${escapeHTML(environment.region)}</span></td>
-        <td><span class="status-badge status-${escapeHTML(status)}">${escapeHTML(statusLabels[status])}</span><span class="env-meta">${escapeHTML(detail)}</span></td>
+        <td><span class="status-badge status-${escapeHTML(status)}">${escapeHTML(statusLabels[status])}</span><span class="env-meta">${detail}</span>${approvalActions}</td>
         <td class="owner-cell">${escapeHTML(owner ? owner.name : "Unknown")}<span class="env-meta">${escapeHTML(environment.team)}</span></td>
-        <td>${escapeHTML(environment.lifetimeDays)} days<span class="env-meta">$${Number(environment.dailyCost).toFixed(2)} / day</span></td>
+        <td>${escapeHTML(environment.lifetimeDays)} days<span class="env-meta">$${Number(environment.dailyCost).toFixed(2)} / day · $${(Number(environment.dailyCost) * 30).toFixed(2)} / month</span></td>
         <td>${resourceDetails}</td>
       </tr>`;
     }).join("");
@@ -379,6 +405,13 @@
       <thead><tr><th>Environment</th><th>Status / lifecycle</th><th>Owner / team</th><th>TTL / estimate</th><th>Resources</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
+
+    el("environment-list").querySelectorAll("[data-approve]").forEach((button) => {
+      button.addEventListener("click", () => handleApprovalDecision(button.dataset.approve, true));
+    });
+    el("environment-list").querySelectorAll("[data-reject]").forEach((button) => {
+      button.addEventListener("click", () => handleApprovalDecision(button.dataset.reject, false));
+    });
   }
 
   function renderOwnerDashboard(user) {
@@ -441,7 +474,7 @@
         <div class="security-policy-copy">
           <div class="security-policy-heading"><h3>${escapeHTML(policy.name)}</h3><span class="policy-category">${escapeHTML(policy.category)}</span></div>
           <p>${escapeHTML(policy.description)}</p>
-          <span class="policy-state ${policy.enabled ? "policy-enabled" : "policy-disabled"}">${policy.enabled ? "Enabled" : "Disabled"}${policy.id === "block-public-ingress" ? " · enforced during provisioning" : ""}</span>
+          <span class="policy-state ${policy.enabled ? "policy-enabled" : "policy-disabled"}">${policy.enabled ? "Enabled" : "Disabled"}${policy.id === "block-public-ingress" ? " · enforced during provisioning" : policy.id === "cost-governance" ? " · enforced during approval routing" : ""}</span>
         </div>
         <div class="security-policy-actions">
           <button class="text-button policy-edit-button" type="button" data-edit-policy="${escapeHTML(policy.id)}">Edit</button>
@@ -544,13 +577,49 @@
     if (data.publicIngress && ingressPolicy?.enabled) {
       messages.push(`${ingressPolicy.name} policy prevents public inbound access.`);
     }
-    const costPolicy = state.policies.find((policy) => policy.id === "cost-governance");
-    const dailyCost = provider?.dailyRates[template?.id];
-    const selectedTtlCost = dailyCost * data.lifetimeDays;
-    if (costPolicy?.enabled && Number.isFinite(selectedTtlCost) && selectedTtlCost > COST_GOVERNANCE_LIMIT) {
-      messages.push(`${costPolicy.name} policy limits the selected TTL estimate to $${COST_GOVERNANCE_LIMIT}; this request is estimated at $${selectedTtlCost.toFixed(2)}.`);
-    }
     return { pass: messages.length === 0, messages: messages.length ? messages : ["Approved blueprint, provider region, naming, and lifetime rules verified."] };
+  }
+
+  function beginProvisioning(environment) {
+    const startedAt = Date.now() + state.clockOffsetMs;
+    environment.status = "provisioning";
+    environment.provisionedAt = new Date(startedAt).toISOString();
+    environment.expiresAt = new Date(startedAt + environment.lifetimeDays * 24 * 60 * 60 * 1000).toISOString();
+    environment.resources = resourceInventories[environment.templateId];
+    saveState();
+    const user = currentUser();
+    if (user) renderWorkspace(user);
+    window.setTimeout(() => {
+      const pending = state.environments.find((item) => item.id === environment.id);
+      if (pending && pending.status === "provisioning") {
+        pending.status = "provisioned";
+        saveState();
+        reconcileLifecycle();
+        const activeUser = currentUser();
+        if (activeUser) renderWorkspace(activeUser);
+      }
+    }, 950);
+  }
+
+  function handleApprovalDecision(environmentId, approved) {
+    const user = currentUser();
+    const environment = state.environments.find((item) => item.id === environmentId);
+    if (!canApprove(user, environment) || environment.status !== "pending-approval") {
+      setNotice("Only the requester's team manager can decide a pending budget approval.", "warning");
+      return;
+    }
+
+    environment.managerDecisionBy = user.name;
+    environment.managerDecisionAt = new Date(Date.now() + state.clockOffsetMs).toISOString();
+    if (approved) {
+      beginProvisioning(environment);
+      setNotice(`${environment.name} was approved by ${user.name} and provisioning has started.`, "success");
+    } else {
+      environment.status = "rejected";
+      saveState();
+      renderWorkspace(user);
+      setNotice(`${environment.name} was rejected by ${user.name}; no resources were created.`, "info");
+    }
   }
 
   function handleRequestSubmit(event) {
@@ -598,7 +667,17 @@
       return;
     }
 
-    const createdAt = Date.now() + state.clockOffsetMs;
+    const dailyCost = providers[data.providerId].dailyRates[template.id];
+    const monthlyCost = dailyCost * 30;
+    const approvalPolicy = state.policies.find((policy) => policy.id === "cost-governance");
+    const requiresApproval = Boolean(approvalPolicy?.enabled && monthlyCost > MONTHLY_APPROVAL_THRESHOLD);
+    const manager = teamManager(user.team);
+    if (requiresApproval && !manager) {
+      state.policyMessage = { pass: false, messages: [`No budget manager is configured for ${user.team}; this request cannot be routed.`] };
+      renderPolicyResult();
+      return;
+    }
+    const requestedAt = Date.now() + state.clockOffsetMs;
     const environment = {
       id: globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
       name: data.name,
@@ -606,32 +685,35 @@
       providerId: data.providerId,
       region: data.region,
       lifetimeDays: data.lifetimeDays,
-      dailyCost: providers[data.providerId].dailyRates[template.id],
-      resources: resourceInventories[template.id],
+      dailyCost,
+      resources: requiresApproval ? [] : resourceInventories[template.id],
       ownerId: user.id,
       team: user.team,
-      createdAt: new Date(createdAt).toISOString(),
-      expiresAt: new Date(createdAt + data.lifetimeDays * 24 * 60 * 60 * 1000).toISOString(),
-      status: "provisioning",
+      createdAt: new Date(requestedAt).toISOString(),
+      expiresAt: requiresApproval ? null : new Date(requestedAt + data.lifetimeDays * 24 * 60 * 60 * 1000).toISOString(),
+      status: requiresApproval ? "pending-approval" : "provisioning",
       publicIngress: data.publicIngress,
-      expirationAlerted: false
+      expirationAlerted: false,
+      approvalManagerId: requiresApproval ? manager.id : null
     };
     state.environments.push(environment);
-    saveState();
-    renderWorkspace(user);
     el("request-form").reset();
     el("environment-name").value = "";
     el("public-ingress").checked = false;
-    window.setTimeout(() => {
-      const pending = state.environments.find((item) => item.id === environment.id);
-      if (pending && pending.status === "provisioning") {
-        pending.status = "provisioned";
-        saveState();
-        reconcileLifecycle();
-        const activeUser = currentUser();
-        if (activeUser) renderWorkspace(activeUser);
-      }
-    }, 950);
+    if (requiresApproval) {
+      state.policyMessage = {
+        pass: true,
+        messages: [`Policy checks passed. Estimated monthly cost is $${monthlyCost.toFixed(2)}, above the $${MONTHLY_APPROVAL_THRESHOLD.toFixed(2)} threshold. Routed to ${manager.name} for approval; provisioning will start only if approved.`]
+      };
+      saveState();
+      renderWorkspace(user);
+    } else {
+      const routingMessage = monthlyCost > MONTHLY_APPROVAL_THRESHOLD
+        ? `Estimated monthly cost is $${monthlyCost.toFixed(2)}, but the monthly budget approval policy is disabled.`
+        : `Estimated monthly cost is $${monthlyCost.toFixed(2)}, within the $${MONTHLY_APPROVAL_THRESHOLD.toFixed(2)} threshold.`;
+      state.policyMessage = { pass: true, messages: [`Policy checks passed. ${routingMessage} Provisioning started without additional approval.`] };
+      beginProvisioning(environment);
+    }
   }
 
   function renderWorkspace(user) {
