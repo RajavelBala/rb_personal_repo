@@ -70,11 +70,29 @@
           <span><strong>US-04</strong> RBAC &amp; SSO</span>
           <span><strong>US-05</strong> TTL &amp; cost governance</span>
           <span><strong>US-06</strong> Policy scanning</span>
+          <span><strong>US-07</strong> Resource dashboard</span>
         </div>
       </section>
 
       <div id="notice-area" aria-live="polite"></div>
       <div id="policy-flash" aria-live="polite"></div>
+
+      <section id="owner-dashboard" class="panel owner-dashboard hidden" aria-labelledby="owner-dashboard-title">
+        <div class="panel-heading">
+          <div><p class="eyebrow">US-07 · MULTI-CLOUD OPERATIONS</p><h2 id="owner-dashboard-title">Centralized resource dashboard</h2></div>
+          <label class="dashboard-filter" for="owner-cloud-filter">Cloud provider
+            <select id="owner-cloud-filter">
+              <option value="all">All providers</option>
+              <option value="aws">AWS</option>
+              <option value="azure">Azure</option>
+              <option value="gcp">GCP</option>
+            </select>
+          </label>
+        </div>
+        <p class="dashboard-note">Health reflects simulated deployment and expiration state; cost figures are demo estimates, not live cloud telemetry.</p>
+        <div id="owner-dashboard-metrics" class="dashboard-metrics"></div>
+        <div id="owner-dashboard-list"></div>
+      </section>
 
       <div class="workspace-grid">
         <section class="panel catalog-panel">

@@ -1,6 +1,6 @@
 # Automated Cloud Provisioning Portal Demo
 
-A local, dependency-free browser demo of the five stories prioritized for the first Sprint Review: US-01, US-02, US-04, US-05, and US-06. It simulates identity, policy checks, cloud provisioning, cost governance estimates, and resource expiration; it does not connect to an identity provider, cloud account, or secret vault.
+A local, dependency-free browser demo of the stories prioritized for the first Sprint Review: US-01, US-02, US-04, US-05, US-06, and US-07. It simulates identity, policy checks, cloud provisioning, cost governance estimates, resource expiration, and an enterprise-wide multi-cloud resource dashboard; it does not connect to an identity provider, cloud account, or secret vault.
 
 ## Run on Windows
 
@@ -30,6 +30,7 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 6. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
 7. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.
 8. **Andy Bernard (Team Nova)** is a manager for Team Nova. Managers see requests from their own team only; sign in as Michael and Andy to compare team-scoped views.
+9. Sign in as **Robert California (Application Owner)** to review active environments across all teams and providers, compare simulated health and running costs, and filter by cloud provider.
 
 ## Sprint 1 stories included
 
@@ -38,12 +39,13 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 - **US-04 — RBAC & Enterprise SSO Gateway:** Seeded mock identities and roles, team-scoped developer access, and restricted actions.
 - **US-06 — Compliance Scanning:** A pre-deployment policy gate with explainable pass/fail results.
 - **US-05 — TTL & Cost Governance:** Select a 30-, 60-, or 90-day lifetime, see daily and selected-TTL cost estimates, review expiration warnings, and demonstrate automatic decommissioning with simulated clock advancement.
+- **US-07 — Centralized Resource Management Dashboard:** Application Owners see all active environments across AWS, Azure, and GCP, including simulated cloud-account labels, lifecycle health, owner/team details, daily running costs, and a 30-day cost forecast. Provider filtering updates the dashboard totals and resource list.
 - Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing. Requests above the $250 selected-TTL demo cost limit are blocked by the cost-governance policy.
 - Expand a created environment's **View resources** row to see its simulated compute, storage, network, and related resource inventory.
 - Sign in as **Dwight Schrute** to review, add, edit, and enable/disable security and compliance policy records. The public-ingress policy is wired to the demo provisioning gate; the other entries are illustrative policy records.
 
-All other stories are shown as future capabilities in `architecture.drawio`; they are not implemented in this demo.
+Other stories are shown as future capabilities in `architecture.drawio`; they are not implemented in this demo.
 
 ## Editable architecture diagram
 
-Open `architecture.drawio` in draw.io / diagrams.net (for example, **File → Open from Device**). The component boxes, story labels, and connectors are editable. The diagram maps all 12 proposal stories and highlights the five implemented demo stories.
+Open `architecture.drawio` in draw.io / diagrams.net (for example, **File → Open from Device**). The component boxes, story labels, and connectors are editable. The diagram maps all 12 proposal stories and highlights the six implemented demo stories.

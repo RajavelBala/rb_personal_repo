@@ -103,7 +103,7 @@
         <mxCell id="portal-request" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Environment request experience&lt;/b&gt;&lt;br&gt;US-02 · parameters, status, results" vertex="1">
           <mxGeometry height="65" width="275" x="263" y="260" as="geometry" />
         </mxCell>
-        <mxCell id="portal-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Resource dashboard&lt;/b&gt;&lt;br&gt;US-07 · cost, health, owner, status" vertex="1">
+        <mxCell id="portal-dashboard" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Resource dashboard&lt;/b&gt;&lt;br&gt;US-07 · cost, health, owner, status" vertex="1">
           <mxGeometry height="65" width="275" x="263" y="345" as="geometry" />
         </mxCell>
         <mxCell id="portal-extension" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Environment extension workflow&lt;/b&gt;&lt;br&gt;US-08 · request a 7-day extension" vertex="1">

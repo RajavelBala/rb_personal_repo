@@ -9,7 +9,8 @@
     { id: "casey", name: "Michael Scott", role: "Manager", team: "Team Atlas", initials: "MS" },
     { id: "noah", name: "Pam Beesly", role: "Developer", team: "Team Nova", initials: "PB" },
     { id: "andy", name: "Andy Bernard", role: "Manager", team: "Team Nova", initials: "AB" },
-    { id: "sam", name: "Dwight Schrute", role: "Security Administrator", team: "Enterprise Security", initials: "DS" }
+    { id: "sam", name: "Dwight Schrute", role: "Security Administrator", team: "Enterprise Security", initials: "DS" },
+    { id: "robert", name: "Robert California", role: "Application Owner", team: "Platform Operations", initials: "RC" }
   ];
 
   const templates = [
@@ -21,6 +22,7 @@
   const providers = {
     aws: {
       name: "AWS",
+      account: "ABC-ENG-AWS-001",
       regions: [
         { id: "us-east-1", name: "US East (N. Virginia)" },
         { id: "us-west-2", name: "US West (Oregon)" },
@@ -30,6 +32,7 @@
     },
     azure: {
       name: "Azure",
+      account: "ABC-ENG-AZR-001",
       regions: [
         { id: "eastus", name: "East US (Virginia)" },
         { id: "westus2", name: "West US 2 (Washington)" },
@@ -39,6 +42,7 @@
     },
     gcp: {
       name: "GCP",
+      account: "ABC-ENG-GCP-001",
       regions: [
         { id: "us-east1", name: "US East (South Carolina)" },
         { id: "us-west1", name: "US West (Oregon)" },
@@ -193,7 +197,7 @@
   }
 
   function visibleEnvironments(user) {
-    if (user.role === "Security Administrator") {
+    if (user.role === "Security Administrator" || user.role === "Application Owner") {
       return [...state.environments];
     }
     return state.environments.filter((environment) => environment.team === user.team);
@@ -373,6 +377,54 @@
 
     el("environment-list").innerHTML = `<div class="table-scroll"><table class="environment-table">
       <thead><tr><th>Environment</th><th>Status / lifecycle</th><th>Owner / team</th><th>TTL / estimate</th><th>Resources</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  }
+
+  function renderOwnerDashboard(user) {
+    const section = el("owner-dashboard");
+    const isOwner = user?.role === "Application Owner";
+    section.classList.toggle("hidden", !isOwner);
+    if (!isOwner) return;
+
+    const filter = el("owner-cloud-filter");
+    const selectedProvider = filter.value || "all";
+    const environments = state.environments
+      .map((environment) => ({ environment, status: lifecycleStatus(environment) }))
+      .filter(({ status }) => ["provisioning", "provisioned", "expiring"].includes(status))
+      .filter(({ environment }) => selectedProvider === "all" || environment.providerId === selectedProvider)
+      .sort((a, b) => b.environment.createdAt.localeCompare(a.environment.createdAt));
+    const dailyCost = environments.reduce((total, { environment }) => total + Number(environment.dailyCost || 0), 0);
+    const attentionCount = environments.filter(({ status }) => status !== "provisioned").length;
+    const formatCost = (amount) => `$${amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    el("owner-dashboard-metrics").innerHTML = `
+      <div class="dashboard-metric"><span>Active environments</span><strong>${environments.length}</strong></div>
+      <div class="dashboard-metric"><span>Estimated daily run rate</span><strong>${formatCost(dailyCost)}<small> / day</small></strong></div>
+      <div class="dashboard-metric"><span>30-day cost forecast</span><strong>${formatCost(dailyCost * 30)}</strong></div>
+      <div class="dashboard-metric ${attentionCount ? "metric-attention" : ""}"><span>Health attention</span><strong>${attentionCount}<small> environment${attentionCount === 1 ? "" : "s"}</small></strong></div>`;
+
+    if (!environments.length) {
+      el("owner-dashboard-list").innerHTML = `<div class="empty-state"><strong>No active environments</strong>Provisioned resources will appear here across all teams and cloud providers.</div>`;
+      return;
+    }
+
+    const rows = environments.map(({ environment, status }) => {
+      const provider = providers[environment.providerId] || providers.aws;
+      const owner = environmentOwner(environment);
+      const health = status === "provisioning" ? "Provisioning" : status === "expiring" ? "Expiring soon" : "Operational";
+      const healthClass = status === "expiring" ? "attention" : status === "provisioning" ? "pending" : "healthy";
+      return `<tr>
+        <td><span class="env-name">${escapeHTML(environment.name)}</span><span class="env-meta">${escapeHTML(environment.region)}</span></td>
+        <td><span class="cloud-account">${escapeHTML(provider.name)}</span><span class="env-meta">${escapeHTML(provider.account)}</span></td>
+        <td><span class="dashboard-health health-${healthClass}"><i aria-hidden="true"></i>${health}</span><span class="env-meta">Expires ${formatDate(environment.expiresAt)}</span></td>
+        <td class="owner-cell">${escapeHTML(owner ? owner.name : "Unknown")}<span class="env-meta">${escapeHTML(environment.team)}${owner ? ` · ${escapeHTML(owner.role)}` : ""}</span></td>
+        <td>${formatCost(Number(environment.dailyCost || 0))}<span class="env-meta">per day</span></td>
+      </tr>`;
+    }).join("");
+
+    el("owner-dashboard-list").innerHTML = `<div class="table-scroll"><table class="environment-table owner-resource-table">
+      <thead><tr><th>Environment / region</th><th>Cloud account</th><th>Health / lifecycle</th><th>Owner / team</th><th>Running cost</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
   }
@@ -587,9 +639,12 @@
     el("login-screen").classList.add("hidden");
     el("workspace").classList.remove("hidden");
     el("welcome-title").textContent = canRequest(user) ? "Your environments" : "Platform workspace";
-    el("welcome-subtitle").textContent = `${user.role === "Manager" ? "Manager" : user.role} · ${user.team}${canRequest(user) ? " · Team-scoped access" : " · Team-scoped read-only view"}`;
+    el("welcome-subtitle").textContent = user.role === "Application Owner"
+      ? `${user.role} · Enterprise-wide read-only visibility`
+      : `${user.role === "Manager" ? "Manager" : user.role} · ${user.team}${canRequest(user) ? " · Team-scoped access" : " · Team-scoped read-only view"}`;
     renderCatalog(user);
     renderPolicyResult();
+    renderOwnerDashboard(user);
     renderEnvironments(user);
     renderSecurityPolicies(user);
     renderNotice();
@@ -646,5 +701,6 @@
     saveState();
   });
   el("lifetime").addEventListener("change", updateCostEstimate);
+  el("owner-cloud-filter").addEventListener("change", () => renderOwnerDashboard(currentUser()));
   render();
 })();

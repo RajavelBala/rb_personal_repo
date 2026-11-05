@@ -114,6 +114,23 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .form-footnote span { color: var(--green); }
 
 .environments-panel { margin-top: 18px; }
+.owner-dashboard { margin-bottom: 18px; }
+.owner-dashboard .panel-heading { margin-bottom: 10px; }
+.dashboard-filter { display: flex; align-items: center; gap: 9px; margin: 0; color: #64748a; font-size: 11px; white-space: nowrap; }
+.dashboard-filter select { width: auto; min-width: 142px; min-height: 36px; }
+.dashboard-note { margin: 0 0 16px; color: #8793a4; font-size: 10px; line-height: 1.5; }
+.dashboard-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.dashboard-metric { min-width: 0; padding: 12px 14px; border: 1px solid #e8edf4; border-radius: 7px; background: #fbfcfe; }
+.dashboard-metric > span { display: block; color: #728096; font-size: 10px; }
+.dashboard-metric strong { display: block; margin-top: 6px; color: #263750; font: 700 19px Manrope, "Segoe UI", sans-serif; overflow-wrap: anywhere; }
+.dashboard-metric strong small { color: #728096; font: 500 10px "DM Sans", "Segoe UI", sans-serif; }
+.dashboard-metric.metric-attention strong { color: #a36a0d; }
+.cloud-account { color: #34465f; font-weight: 700; }
+.dashboard-health { display: inline-flex; align-items: center; gap: 6px; color: #12825e; font-weight: 700; white-space: nowrap; }
+.dashboard-health i { width: 7px; height: 7px; border-radius: 50%; background: #22a879; }
+.health-pending { color: #986d0a; }.health-pending i { background: #d3a12f; }
+.health-attention { color: #a36a0d; }.health-attention i { background: #d58a21; }
+.owner-resource-table { min-width: 760px; }
 .environments-panel .panel-heading { margin-bottom: 15px; }
 .empty-state { padding: 24px 12px; border: 1px dashed #dce3ed; border-radius: 8px; text-align: center; color: #8793a4; font-size: 12px; }
 .empty-state strong { display: block; margin-bottom: 4px; color: #53637a; font-size: 13px; }
@@ -174,6 +191,7 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
   .demo-note { margin-top: 25px; }
   .workspace-grid { grid-template-columns: 1fr; }
   .sprint-scope { grid-template-columns: 1fr; gap: 10px; }
+  .dashboard-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
   .topbar { height: 64px; padding: 0 16px; }
@@ -182,6 +200,9 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
   .page-shell { width: calc(100% - 28px); margin-top: 28px; }
   .login-card, .panel { padding: 18px; }
   .welcome-row { align-items: flex-start; gap: 12px; flex-direction: column; }
+  .owner-dashboard .panel-heading { align-items: flex-start; flex-direction: column; }
+  .dashboard-filter { width: 100%; justify-content: space-between; }
+  .dashboard-filter select { flex: 1; }
   .form-row { gap: 8px; }
   .security-policy-card { align-items: flex-start; flex-direction: column; gap: 8px; }
   .policy-editor .form-row { grid-template-columns: 1fr; }
