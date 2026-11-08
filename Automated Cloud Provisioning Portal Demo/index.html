@@ -71,6 +71,7 @@
           <span><strong>US-05</strong> TTL &amp; cost governance</span>
           <span><strong>US-06</strong> Policy scanning</span>
           <span><strong>US-07</strong> Resource dashboard</span>
+          <span><strong>US-12</strong> Audit logging</span>
         </div>
       </section>
 
@@ -189,6 +190,31 @@
             <button id="policy-cancel" class="button-secondary hidden" type="button">Cancel edit</button>
           </div>
         </form>
+      </section>
+      <section id="audit-log-section" class="panel audit-logs-panel hidden" aria-labelledby="audit-logs-title">
+        <div class="panel-heading">
+          <div><p class="eyebrow">US-12 · COMPLIANCE</p><h2 id="audit-logs-title">System audit log</h2></div>
+          <div class="audit-heading-actions">
+            <span id="audit-log-count" class="count-pill">0 EVENTS</span>
+            <button id="audit-export-button" class="button-secondary" type="button" title="Export all audit events as CSV">Export CSV</button>
+          </div>
+        </div>
+        <p class="audit-note">Recorded demo history of user and automated actions. Automated approval and TTL deletion are labeled explicitly.</p>
+        <div class="audit-filters">
+          <label for="audit-action-filter">Action
+            <select id="audit-action-filter">
+              <option value="all">All actions</option>
+              <option value="requested">Requested</option>
+              <option value="approved">Approved</option>
+              <option value="modified">Modified</option>
+              <option value="deleted">Deleted</option>
+            </select>
+          </label>
+          <label for="audit-search">Search
+            <input id="audit-search" type="search" placeholder="Actor, resource, team, or details">
+          </label>
+        </div>
+        <div id="audit-log-list"></div>
       </section>
       <footer class="page-footer">
         <span>Demo mode · No cloud resources are created</span>

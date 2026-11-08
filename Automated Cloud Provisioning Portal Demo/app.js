@@ -3,6 +3,7 @@
 
   const STORAGE_KEY = "abc-cloud-launchpad-demo-v1";
   const COST_GOVERNANCE_LIMIT = 250;
+  const MAX_AUDIT_EVENTS = 2000;
   const users = [
     { id: "ava", name: "Jim Halpert", role: "Developer", team: "Team Atlas", initials: "JH" },
     { id: "ron", name: "Oscar Martinez", role: "Developer", team: "Team Atlas", initials: "OM" },
@@ -10,7 +11,8 @@
     { id: "noah", name: "Pam Beesly", role: "Developer", team: "Team Nova", initials: "PB" },
     { id: "andy", name: "Andy Bernard", role: "Manager", team: "Team Nova", initials: "AB" },
     { id: "sam", name: "Dwight Schrute", role: "Security Administrator", team: "Enterprise Security", initials: "DS" },
-    { id: "robert", name: "Robert California", role: "Application Owner", team: "Platform Operations", initials: "RC" }
+    { id: "robert", name: "Robert California", role: "Application Owner", team: "Platform Operations", initials: "RC" },
+    { id: "auditor", name: "Kelly Kapoor", role: "IT Compliance Auditor", team: "Enterprise Compliance", initials: "KK" }
   ];
 
   const templates = [
@@ -131,6 +133,9 @@
         selectedTemplateId: templates.some((template) => template.id === parsed.selectedTemplateId) ? parsed.selectedTemplateId : "node",
         selectedProviderId: providers[parsed.selectedProviderId] ? parsed.selectedProviderId : "aws",
         policies: loadPolicies(parsed.policies),
+        auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs
+          .filter((entry) => entry && typeof entry.id === "string" && typeof entry.timestamp === "string" && typeof entry.action === "string")
+          .slice(-MAX_AUDIT_EVENTS) : [],
         environments: Array.isArray(parsed.environments) ? parsed.environments.filter((item) =>
           item && typeof item.id === "string" && typeof item.name === "string" &&
           templates.some((template) => template.id === item.templateId) &&
@@ -149,7 +154,7 @@
       };
     } catch (error) {
       console.error("Unable to load saved demo data.", error);
-      return { currentUserId: null, selectedTemplateId: "node", selectedProviderId: "aws", policies: loadPolicies([]), environments: [], clockOffsetMs: 0, policyMessage: null };
+      return { currentUserId: null, selectedTemplateId: "node", selectedProviderId: "aws", policies: loadPolicies([]), auditLogs: [], environments: [], clockOffsetMs: 0, policyMessage: null };
     }
   }
 
@@ -164,6 +169,7 @@
         selectedTemplateId: state.selectedTemplateId,
         selectedProviderId: state.selectedProviderId,
         policies: state.policies,
+        auditLogs: state.auditLogs,
         environments: state.environments,
         clockOffsetMs: state.clockOffsetMs
       }));
@@ -171,6 +177,31 @@
       console.error("Unable to save demo data in this browser.", error);
       setNotice("Demo data could not be saved in browser storage. The current session can continue, but progress may not persist.", "warning");
     }
+  }
+
+  function recordAudit({ action, target, details, outcome, actor }) {
+    const provider = providers[target.providerId];
+    const eventId = globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `audit-${Date.now()}-${Math.random()}`;
+    const eventActor = actor || currentUser() || { id: "system", name: "System", role: "System" };
+    state.auditLogs.push({
+      id: eventId,
+      timestamp: new Date(Date.now() + state.clockOffsetMs).toISOString(),
+      actorId: eventActor.id || "system",
+      actorName: eventActor.name,
+      actorRole: eventActor.role,
+      action,
+      targetType: target.type || "Environment",
+      resourceId: target.id || "",
+      resourceName: target.name || "",
+      ownerName: target.ownerName || "",
+      team: target.team || "",
+      provider: provider?.name || "",
+      cloudAccount: provider?.account || "",
+      region: target.region || "",
+      outcome,
+      details
+    });
+    if (state.auditLogs.length > MAX_AUDIT_EVENTS) state.auditLogs.splice(0, state.auditLogs.length - MAX_AUDIT_EVENTS);
   }
 
   function setNotice(message, type = "info") {
@@ -197,7 +228,7 @@
   }
 
   function visibleEnvironments(user) {
-    if (user.role === "Security Administrator" || user.role === "Application Owner") {
+    if (user.role === "Security Administrator" || user.role === "Application Owner" || user.role === "IT Compliance Auditor") {
       return [...state.environments];
     }
     return state.environments.filter((environment) => environment.team === user.team);
@@ -230,6 +261,13 @@
       if (remaining <= 0) {
         environment.status = "decommissioned";
         environment.decommissionedAt = new Date(now).toISOString();
+        recordAudit({
+          action: "deleted",
+          target: { ...environment, type: "Environment", ownerName: environmentOwner(environment)?.name },
+          actor: { id: "ttl-lifecycle", name: "TTL Lifecycle Manager", role: "Automated Lifecycle" },
+          outcome: "Decommissioned",
+          details: "Environment lifetime expired; simulated resources were automatically decommissioned."
+        });
         expired += 1;
       } else if (remaining <= 24 * 60 * 60 * 1000 && !environment.expirationAlerted) {
         environment.expirationAlerted = true;
@@ -458,7 +496,15 @@
         if (currentUser()?.role !== "Security Administrator") return;
         const policy = state.policies.find((item) => item.id === control.dataset.togglePolicy);
         if (!policy) return;
+        const wasEnabled = policy.enabled;
         policy.enabled = control.checked;
+        recordAudit({
+          action: "modified",
+          target: { ...policy, type: "Policy" },
+          actor: currentUser(),
+          outcome: "Updated",
+          details: `Policy state changed from ${wasEnabled ? "enabled" : "disabled"} to ${policy.enabled ? "enabled" : "disabled"}.`
+        });
         saveState();
         renderCatalog(currentUser());
         renderSecurityPolicies(currentUser());
@@ -482,6 +528,68 @@
     });
   }
 
+  function renderAuditLog(user) {
+    const section = el("audit-log-section");
+    const isAuditor = user?.role === "IT Compliance Auditor";
+    section.classList.toggle("hidden", !isAuditor);
+    if (!isAuditor) return;
+
+    const action = el("audit-action-filter").value;
+    const query = el("audit-search").value.trim().toLowerCase();
+    const events = [...state.auditLogs]
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp))
+      .filter((event) => action === "all" || event.action === action)
+      .filter((event) => !query || [event.actorName, event.actorRole, event.action, event.resourceName, event.resourceId, event.ownerName, event.team, event.provider, event.cloudAccount, event.region, event.outcome, event.details].some((value) => String(value || "").toLowerCase().includes(query)));
+
+    el("audit-log-count").textContent = `${events.length} OF ${state.auditLogs.length} EVENTS`;
+    if (!events.length) {
+      el("audit-log-list").innerHTML = `<div class="empty-state"><strong>${state.auditLogs.length ? "No matching audit events" : "No audit events yet"}</strong>${state.auditLogs.length ? "Adjust the action filter or search terms." : "Resource and policy actions will be recorded here."}</div>`;
+      return;
+    }
+
+    const rows = events.map((event) => {
+      const timestamp = new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "medium" }).format(new Date(event.timestamp));
+      const actionClass = event.action === "deleted" ? "audit-action-deleted" : event.action === "modified" ? "audit-action-modified" : "";
+      const cloudContext = [event.provider, event.cloudAccount, event.region].filter(Boolean).join(" · ");
+      return `<tr>
+        <td>${escapeHTML(timestamp)}</td>
+        <td><span class="audit-actor">${escapeHTML(event.actorName)}</span><span class="env-meta">${escapeHTML(event.actorRole)} · ${escapeHTML(event.actorId)}</span></td>
+        <td><span class="audit-action ${actionClass}">${escapeHTML(event.action)}</span></td>
+        <td><span class="env-name">${escapeHTML(event.resourceName || "Unnamed target")}</span><span class="env-meta">${escapeHTML(event.targetType)} · ${escapeHTML(event.resourceId)}</span></td>
+        <td>${escapeHTML(cloudContext || "Not applicable")}</td>
+        <td class="audit-outcome">${escapeHTML(event.outcome)}</td>
+        <td class="audit-details">${escapeHTML(event.details)}</td>
+      </tr>`;
+    }).join("");
+
+    el("audit-log-list").innerHTML = `<div class="table-scroll"><table class="environment-table audit-log-table">
+      <thead><tr><th>Timestamp</th><th>Actor</th><th>Action</th><th>Resource</th><th>Cloud context</th><th>Outcome</th><th>Details</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  }
+
+  function exportAuditLogs() {
+    if (currentUser()?.role !== "IT Compliance Auditor") {
+      setNotice("Only the IT Compliance Auditor can export audit logs.", "warning");
+      return;
+    }
+    const columns = ["eventId", "timestamp", "actorId", "actorName", "actorRole", "action", "targetType", "resourceId", "resourceName", "ownerName", "team", "provider", "cloudAccount", "region", "outcome", "details"];
+    const csvValue = (value) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+    const rows = [...state.auditLogs]
+      .sort((a, b) => a.timestamp.localeCompare(b.timestamp))
+      .map((event) => columns.map((column) => csvValue(column === "eventId" ? event.id : event[column])).join(","));
+    const csv = [columns.map(csvValue).join(","), ...rows].join("\r\n");
+    const blob = new Blob(["\uFEFF", csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cloud-launchpad-audit-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
   function resetPolicyEditor() {
     editingPolicyId = null;
     el("policy-form").reset();
@@ -503,6 +611,8 @@
     if (!name || !description || !policyCategories.includes(category)) return;
 
     const wasEditing = Boolean(editingPolicyId);
+    let updatedPolicy;
+    let auditDetails;
     if (wasEditing) {
       const policy = state.policies.find((item) => item.id === editingPolicyId);
       if (!policy) {
@@ -510,19 +620,29 @@
         resetPolicyEditor();
         return;
       }
+      auditDetails = `Policy details updated. Previous name: ${policy.name}; new name: ${name}; category: ${category}.`;
       policy.name = name;
       policy.description = description;
       policy.category = category;
+      updatedPolicy = policy;
     } else {
-      state.policies.push({
+      updatedPolicy = {
         id: globalThis.crypto && crypto.randomUUID ? crypto.randomUUID() : `custom-${Date.now()}-${Math.random()}`,
         name,
         description,
         category,
         enabled: true
-      });
+      };
+      state.policies.push(updatedPolicy);
     }
 
+    recordAudit({
+      action: "modified",
+      target: { ...updatedPolicy, type: "Policy" },
+      actor: currentUser(),
+      outcome: wasEditing ? "Updated" : "Created",
+      details: auditDetails || `Policy created in the ${category} category: ${description}`
+    });
     saveState();
     resetPolicyEditor();
     renderSecurityPolicies(currentUser());
@@ -592,6 +712,13 @@
         policyReasons: result.messages.filter((message) => !message.startsWith("Only a Developer"))
       };
       state.environments.push(record);
+      recordAudit({
+        action: "requested",
+        target: { ...record, type: "Environment", ownerName: user.name },
+        actor: user,
+        outcome: "Blocked by policy",
+        details: `Request for ${template.name}; ${result.messages.join(" ")}`
+      });
       saveState();
       renderWorkspace(user);
       el("policy-flash").scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -617,6 +744,21 @@
       expirationAlerted: false
     };
     state.environments.push(environment);
+    const requestDetails = `${template.name}; ${providers[data.providerId].name} account ${providers[data.providerId].account}; region ${data.region}; ${data.lifetimeDays}-day lifetime.`;
+    recordAudit({
+      action: "requested",
+      target: { ...environment, type: "Environment", ownerName: user.name },
+      actor: user,
+      outcome: "Submitted",
+      details: requestDetails
+    });
+    recordAudit({
+      action: "approved",
+      target: { ...environment, type: "Environment", ownerName: user.name },
+      actor: { id: "policy-engine", name: "Policy Engine", role: "Automated Policy Gate" },
+      outcome: "Approved",
+      details: result.messages.join(" ")
+    });
     saveState();
     renderWorkspace(user);
     el("request-form").reset();
@@ -626,6 +768,14 @@
       const pending = state.environments.find((item) => item.id === environment.id);
       if (pending && pending.status === "provisioning") {
         pending.status = "provisioned";
+        const owner = environmentOwner(pending);
+        recordAudit({
+          action: "modified",
+          target: { ...pending, type: "Environment", ownerName: owner?.name },
+          actor: { id: "provisioner", name: "Provisioning Engine", role: "Automated Provisioning" },
+          outcome: "Provisioned",
+          details: "Resource deployment completed; environment status changed from Provisioning to Provisioned."
+        });
         saveState();
         reconcileLifecycle();
         const activeUser = currentUser();
@@ -647,6 +797,7 @@
     renderOwnerDashboard(user);
     renderEnvironments(user);
     renderSecurityPolicies(user);
+    renderAuditLog(user);
     renderNotice();
     el("demo-clock").textContent = `Demo time: ${new Date(Date.now() + state.clockOffsetMs).toLocaleString()}`;
     const form = el("request-form");
@@ -694,6 +845,9 @@
   el("request-form").addEventListener("submit", handleRequestSubmit);
   el("policy-form").addEventListener("submit", handlePolicySubmit);
   el("policy-cancel").addEventListener("click", resetPolicyEditor);
+  el("audit-action-filter").addEventListener("change", () => renderAuditLog(currentUser()));
+  el("audit-search").addEventListener("input", () => renderAuditLog(currentUser()));
+  el("audit-export-button").addEventListener("click", exportAuditLogs);
   el("cloud-provider").addEventListener("change", () => {
     state.selectedProviderId = el("cloud-provider").value;
     renderRegions();
