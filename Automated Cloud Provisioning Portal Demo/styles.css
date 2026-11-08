@@ -101,10 +101,11 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .form-row label { margin-top: 13px; }
 .estimate-card { min-width: 0; margin-top: 13px; padding: 8px 10px; border: 1px solid #dfe8fb; border-radius: 6px; background: #f6f8ff; }
-.estimate-label, .estimate-total, .estimate-disclaimer { display: block; }
+.estimate-label, .estimate-monthly, .estimate-total, .estimate-disclaimer { display: block; }
 .estimate-label { color: #728096; font-size: 10px; }
 .estimate-card strong { display: block; margin-top: 2px; color: #244ba8; font: 700 16px Manrope, "Segoe UI", sans-serif; }
 .estimate-card strong small { font: 500 10px "DM Sans", "Segoe UI", sans-serif; color: #728096; }
+.estimate-monthly { margin-top: 3px; color: #263750; font-size: 10px; font-weight: 700; }
 .estimate-total { margin-top: 2px; color: #586982; font-size: 10px; }
 .estimate-disclaimer { margin-top: 4px; color: #939eae; font-size: 9px; }
 .checkbox-label { display: flex; align-items: flex-start; gap: 9px; margin-top: 17px; color: #47566c; font-size: 11px; font-weight: 500; }
@@ -148,6 +149,10 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .resource-details li strong, .resource-details li span { display: block; }
 .resource-details li span { margin-top: 2px; color: #8793a4; }
 .resource-empty { min-width: 150px; color: #98a3b1; font-size: 10px; line-height: 1.5; }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.approval-actions .button { min-height: 28px; padding: 5px 8px; font-size: 9px; }
+.button-approve { border: 1px solid #ccebdc; color: #176e51; background: #eaf8f1; }
+.button-reject { border: 1px solid #f1d9dc; color: #9f3541; background: #fff0f1; }
 .security-policies-panel { margin-top: 18px; }
 .audit-logs-panel { margin-top: 18px; }
 .audit-logs-panel .panel-heading { margin-bottom: 10px; }
@@ -186,7 +191,7 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .policy-editor-actions .button { margin-top: 13px; }
 .policy-editor-actions .button-secondary { margin-top: 13px; }
 .status-badge { display: inline-block; padding: 5px 8px; border-radius: 20px; font-size: 9px; font-weight: 700; }
-.status-provisioned { color: #10845e; background: #e8f7f0; }.status-provisioning { color: #986d0a; background: #fff5dc; }.status-blocked { color: #b33947; background: #fff0f1; }.status-expiring { color: #a36a0d; background: #fff3dc; }.status-decommissioned { color: #697689; background: #eef1f5; }
+.status-provisioned { color: #10845e; background: #e8f7f0; }.status-provisioning { color: #986d0a; background: #fff5dc; }.status-pending-approval { color: #604bb0; background: #f0edff; }.status-rejected, .status-blocked { color: #b33947; background: #fff0f1; }.status-expiring { color: #a36a0d; background: #fff3dc; }.status-decommissioned { color: #697689; background: #eef1f5; }
 .owner-cell { color: #5f6f84; }
 .notice { margin-bottom: 14px; padding: 12px 14px; border-radius: 7px; font-size: 12px; line-height: 1.55; }
 .notice-success { color: #176e51; background: #eaf8f1; border: 1px solid #d5f0e3; }.notice-warning { color: #835a12; background: #fff7e6; border: 1px solid #f4e6bd; }.notice-info { color: #3b5d98; background: #edf3ff; border: 1px solid #dce7ff; }

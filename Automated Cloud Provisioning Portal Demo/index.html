@@ -67,6 +67,7 @@
         <div class="sprint-scope-list">
           <span><strong>US-01</strong> Catalog</span>
           <span><strong>US-02</strong> Provisioning</span>
+          <span><strong>US-03</strong> Cost &amp; approval</span>
           <span><strong>US-04</strong> RBAC &amp; SSO</span>
           <span><strong>US-05</strong> TTL &amp; cost governance</span>
           <span><strong>US-06</strong> Policy scanning</span>
@@ -137,6 +138,7 @@
               <div class="estimate-card" aria-live="polite">
                 <span class="estimate-label">Cost governance estimate</span>
                 <strong id="daily-estimate">$0.00 <small>/ day</small></strong>
+                <span id="monthly-estimate" class="estimate-monthly"></span>
                 <span id="total-estimate" class="estimate-total"></span>
                 <span id="cost-governance-note" class="estimate-disclaimer">Demo estimate · not live pricing</span>
               </div>
@@ -163,7 +165,7 @@
           <div><p class="eyebrow">SECURITY ADMINISTRATION</p><h2 id="security-policies-title">Security &amp; compliance policies</h2></div>
           <span id="policy-count" class="count-pill"></span>
         </div>
-        <p class="policy-intro">Review and maintain the demo guardrails. The public ingress policy is enforced during provisioning checks; other policy entries are managed as demo policy records.</p>
+        <p class="policy-intro">Review and maintain the demo guardrails. Public ingress is enforced during provisioning checks, and requests above the monthly budget threshold require approval from their team manager before provisioning.</p>
         <div id="security-policy-list" class="security-policy-list"></div>
         <form id="policy-form" class="policy-editor">
           <h3 id="policy-form-heading">Add a policy</h3>

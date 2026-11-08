@@ -1,6 +1,6 @@
 # Automated Cloud Provisioning Portal Demo
 
-A local, dependency-free browser demo of US-01, US-02, US-04, US-05, US-06, US-07, and US-12. It simulates identity, policy checks, cloud provisioning, cost governance estimates, resource expiration, a multi-cloud resource dashboard, and audit reporting. Audit events are stored in browser local storage (up to 2,000 recent events); this is a class demo, not tamper-proof regulatory storage, and it does not connect to an identity provider, cloud account, or secret vault.
+A local, dependency-free browser demo of US-01, US-02, US-03, US-04, US-05, US-06, US-07, and US-12. It simulates identity, policy checks, manager budget approvals, cloud provisioning, cost estimates, resource expiration, a multi-cloud resource dashboard, and audit reporting. Audit events are stored in browser local storage (up to 2,000 recent events); this is a class demo, not tamper-proof regulatory storage, and it does not connect to an identity provider, cloud account, or secret vault.
 
 ## Run on Windows
 
@@ -25,24 +25,26 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 1. Sign in as **Jim Halpert (Team Atlas)** using the mock SSO selector. No password is used.
 2. Browse the three approved templates and submit a compliant request. The deployment status changes from queued to provisioned.
 3. Submit another request with **Public inbound access** enabled. The policy gate displays the violation and blocks provisioning.
-4. Review the environment's expiration time and use **Advance 30 days** in the footer to demonstrate TTL expiration and automatic teardown. Sign in as either manager to see requests for that manager's team.
-5. Sign in as **Dwight Schrute** to demonstrate role-based access boundaries, policy administration, and cross-team read-only visibility.
-6. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
-7. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.
-8. **Andy Bernard (Team Nova)** is a manager for Team Nova. Managers see requests from their own team only; sign in as Michael and Andy to compare team-scoped views.
-9. Sign in as **Robert California (Application Owner)** to review active environments across all teams and providers, compare simulated health and running costs, and filter by cloud provider.
-10. Sign in as **Kelly Kapoor (IT Compliance Auditor)** to search and filter the audit log, then export all recorded events as CSV. Requests, automated policy-gate approvals, provisioning completion, TTL decommissioning, and policy changes are recorded with actor, timestamp, resource, cloud context, outcome, and details. Approval and deletion are simulated system actions; there is no human approval or manual delete workflow in this demo.
+4. As Jim Halpert, select **Kubernetes Namespace** to see a monthly estimate above $500, then submit it. The request remains pending until Michael Scott approves or rejects it. Switch to Michael to decide; approval starts provisioning, while rejection creates no resources.
+5. Review the environment's expiration time and use **Advance 30 days** in the footer to demonstrate TTL expiration and automatic teardown. Sign in as either manager to see requests for that manager's team.
+6. Sign in as **Dwight Schrute** to demonstrate role-based access boundaries, policy administration, and cross-team read-only visibility.
+7. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
+8. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.
+9. **Andy Bernard (Team Nova)** is a manager for Team Nova. Managers see requests from their own team only; sign in as Michael and Andy to compare team-scoped views.
+10. Sign in as **Robert California (Application Owner)** to review active environments across all teams and providers, compare simulated health and running costs, and filter by cloud provider.
+11. Sign in as **Kelly Kapoor (IT Compliance Auditor)** to search and filter the audit log, then export all recorded events as CSV. Requests, automated policy-gate approvals, manager decisions, provisioning changes, TTL decommissioning, and policy changes are recorded. Audit data is local demo history, not tamper-proof compliance storage.
 
 ## Sprint 1 stories included
 
 - **US-01 — Service Catalog:** Three pre-approved sample environment blueprints.
 - **US-02 — Provisioning:** Validated requests and simulated asynchronous deployment.
+- **US-03 — Cost Estimation & Approval Routing:** Show daily, monthly, and selected-lifetime cost estimates before submission. With the budget approval policy enabled, requests above the $500/month demo threshold wait for approval by their own team's manager; lower-cost requests provision without additional approval. Managers can approve to start provisioning or reject without creating resources.
 - **US-04 — RBAC & Enterprise SSO Gateway:** Seeded mock identities and roles, team-scoped developer access, and restricted actions.
 - **US-06 — Compliance Scanning:** A pre-deployment policy gate with explainable pass/fail results.
 - **US-05 — TTL & Cost Governance:** Select a 30-, 60-, or 90-day lifetime, see daily and selected-TTL cost estimates, review expiration warnings, and demonstrate automatic decommissioning with simulated clock advancement.
 - **US-07 — Centralized Resource Management Dashboard:** Application Owners see all active environments across AWS, Azure, and GCP, including simulated cloud-account labels, lifecycle health, owner/team details, daily running costs, and a 30-day cost forecast. Provider filtering updates the dashboard totals and resource list.
 - **US-12 — System Audit Logging & Compliance Reporting:** IT Compliance Auditors can search/filter the local event ledger and export all retained events to CSV. Records include who/what/when, target resource, owner/team, cloud account and region, outcome, and event details. The policy gate is the demo's automated approval source; TTL lifecycle automation is the deletion source.
-- Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing. Requests above the $250 selected-TTL demo cost limit are blocked by the cost-governance policy.
+- Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing. The Kubernetes sample rate is intentionally above $500/month on all providers so the manager approval workflow can be demonstrated.
 - Expand a created environment's **View resources** row to see its simulated compute, storage, network, and related resource inventory.
 - Sign in as **Dwight Schrute** to review, add, edit, and enable/disable security and compliance policy records. The public-ingress policy is wired to the demo provisioning gate; the other entries are illustrative policy records.
 
