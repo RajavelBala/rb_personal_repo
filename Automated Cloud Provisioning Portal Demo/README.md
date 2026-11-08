@@ -4,10 +4,10 @@
 
 - **US-03 Cost estimation & approval:** lifecycle projections update as blueprint and TTL change; requests over the simulated $200 total lifecycle budget route to the requester's team manager.
 - **US-07 Centralized operations:** the Application Owner dashboard supports cloud, health, and free-text environment/owner/team filtering, with estimated daily and 30-day cost context.
-- **US-09 Secret management:** the portal simulates encrypted secret injection using a vault reference only. It never creates, displays, stores, or exports plaintext credentials. Environment records include a non-secret reference path, least-privilege status, rotation schedule, and a permission-only test action.
+- **US-09 Secret management:** the portal simulates encrypted secret injection using a vault reference only. It never creates, displays, stores, or exports plaintext credentials. Environment records include a non-secret reference path, least-privilege status, and a permission-only test action.
 - **US-12 Audit reporting:** the Compliance Auditor role can filter immutable simulated events and export complete CSV or JSON reports. Audit payloads intentionally omit secret values.
 
-A local, dependency-free browser demo of the stories prioritized for the first Sprint Review: US-01, US-02, US-03, US-04, US-05, US-06, and US-07. It simulates identity, policy checks, cloud provisioning, cost estimation and approval routing, resource expiration, and an enterprise-wide multi-cloud resource dashboard; it does not connect to an identity provider, cloud account, or secret vault.
+A local, dependency-free browser demo of US-01 through US-07 plus Sprint 2 additions US-09 and US-12. It simulates identity, policy checks, multi-cloud provisioning, lifecycle-cost approval routing, vault-reference injection, resource expiration, operations visibility, and audit reporting. It does not connect to an identity provider, cloud account, or secret vault.
 
 ## Run on Windows
 
@@ -29,29 +29,39 @@ No packages, cloud credentials, or internet connection are required. Demo state 
 
 ## Suggested demo walkthrough
 
-1. Sign in as **Jim Halpert (Team Atlas)** using the mock SSO selector. No password is used.
-2. Browse the three approved templates and submit a compliant request. The deployment status changes from queued to provisioned.
-3. Submit another request with **Public inbound access** enabled. The policy gate displays the violation and blocks provisioning.
-4. As Jim Halpert, select **Kubernetes Namespace** to see a monthly estimate above $500, then submit it. The request remains pending until Michael Scott approves or rejects it. Switch to Michael to decide; approval starts provisioning, while rejection creates no resources.
-5. Review the environment's expiration time and use **Advance 30 days** in the footer to demonstrate TTL expiration and automatic teardown. Sign in as either manager to see requests for that manager's team.
-6. Sign in as **Dwight Schrute** to demonstrate role-based access boundaries, policy administration, and cross-team read-only visibility.
-7. Sign in as **Pam Beesly (Team Nova)** to verify team isolation.
-8. **Oscar Martinez (Team Atlas)** is another developer account for testing shared team visibility.
-9. **Andy Bernard (Team Nova)** is a manager for Team Nova. Managers see requests from their own team only; sign in as Michael and Andy to compare team-scoped views.
-10. Sign in as **Robert California (Application Owner)** to review active environments across all teams and providers, compare simulated health and running costs, and filter by cloud provider.
+1. Start with **Jim Halpert (Developer, Team Atlas)**. Select **Node.js API Service**, enter a compliant environment name, and review the daily, monthly, 30-day, and expandable cost breakdown.
+2. Confirm the green routing banner: the $144.60 Node.js 30-day projection is **Auto-approved** because it is within the simulated $200 lifecycle budget. Provision it and wait for the simulated deployment to complete.
+3. In the created environment row, show the non-secret **Vault reference**, encrypted-injection status, and least-privilege workload policy. Select **Test injection** to demonstrate connectivity and permission-scope validation without retrieving a secret value.
+4. Return to the catalog and select **Python Microservice**. Its $259.20 30-day projection changes the main action to **Submit for approval** and names **Michael Scott** as the Team Atlas approver. Submit it, then sign in as Michael to approve or reject it.
+5. As Jim, submit a request with **Public inbound access** enabled. The enforced policy blocks it before simulated deployment.
+6. Use **Advance 30 days** to demonstrate TTL expiry and automatic decommissioning. The audit log records the lifecycle outcome.
+7. Sign in as **Robert California (Application Owner)** to review the centralized multi-cloud dashboard. Filter its active inventory by provider, health, and free-text environment, owner, or team terms; review daily run-rate and 30-day forecast values.
+8. Sign in as **Angela Martin (Compliance Auditor)** to review chronologically ordered audit events. Filter by action, team, date, and resource/actor text, then export the complete simulated evidence set as **CSV** or **JSON**.
+9. Sign in as **Dwight Schrute (Security Administrator)** to demonstrate policy administration and enterprise-wide read-only visibility. **Pam Beesly** and **Oscar Martinez** can be used to demonstrate team-scoped developer access; **Andy Bernard** is Team Nova's manager.
 
-## Sprint 1 stories included
+## Current build and changes since Sprint 1
+
+The current build retains the Sprint 1 catalog, simulated provisioning, RBAC, public-ingress policy gate, TTL lifecycle, and multi-cloud environment visibility. Sprint 2 changes the review story in four practical ways:
+
+- **Lifecycle-cost governance (US-03):** Approval now uses the selected blueprint and duration's total projected lifecycle cost, with a simulated $200 auto-approval threshold. The UI exposes the routing decision, approver, dynamic primary action, and cost breakdown before submission.
+- **Operations visibility (US-07):** The Application Owner dashboard now includes health and free-text filtering alongside provider filtering, plus daily and 30-day estimated cost context.
+- **Secret-management simulation (US-09):** Provisioning records a vault reference and secure-injection progress without creating, showing, persisting, logging, or exporting any plaintext credential. It also presents a least-privilege access signal.
+- **Compliance evidence (US-12):** The Compliance Auditor role has a system-wide audit dashboard with filtered, chronological lifecycle evidence and CSV/JSON export. Records are append-only in browser storage and should not be treated as production-grade tamper-proof storage.
+
+## Included user stories
 
 - **US-01 — Service Catalog:** Three pre-approved sample environment blueprints.
 - **US-02 — Provisioning:** Validated requests and simulated asynchronous deployment.
-- **US-03 — Cost Estimation & Approval Routing:** Show daily, monthly, and selected-lifetime cost estimates before submission. With the budget approval policy enabled, requests above the $500/month demo threshold wait for approval by their own team's manager; lower-cost requests provision without additional approval. Managers can approve to start provisioning or reject without creating resources.
+- **US-03 — Cost Estimation & Approval Routing:** Show daily, monthly, and selected-lifetime cost estimates before submission. With the budget approval policy enabled, requests above the $200 total lifecycle demo threshold wait for approval by their own team's manager; lower-cost requests provision without additional approval. Managers can approve to start provisioning or reject without creating resources.
 - **US-04 — RBAC & Enterprise SSO Gateway:** Seeded mock identities and roles, team-scoped developer access, and restricted actions.
 - **US-06 — Compliance Scanning:** A pre-deployment policy gate with explainable pass/fail results.
 - **US-05 — TTL & Cost Governance:** Select a 30-, 60-, or 90-day lifetime, see daily and selected-TTL cost estimates, review expiration warnings, and demonstrate automatic decommissioning with simulated clock advancement.
-- **US-07 — Centralized Resource Management Dashboard:** Application Owners see all active environments across AWS, Azure, and GCP, including simulated cloud-account labels, lifecycle health, owner/team details, daily running costs, and a 30-day cost forecast. Provider filtering updates the dashboard totals and resource list.
-- Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing. The Kubernetes sample rate is intentionally above $500/month on all providers so the approval workflow can be demonstrated.
+- **US-07 — Centralized Resource Management Dashboard:** Application Owners see all active environments across AWS, Azure, and GCP, including simulated cloud-account labels, lifecycle health, owner/team details, daily running costs, and a 30-day cost forecast. Provider, health, and free-text filters update the inventory view.
+- Requests can select AWS, Azure, or GCP; provider-specific sample regions and catalog-based cost estimates update before submission. Estimates are illustrative fixed demo rates, not live cloud pricing. Python Microservice at 30 days is intentionally above the $200 lifecycle threshold so the approval workflow can be demonstrated.
 - Expand a created environment's **View resources** row to see its simulated compute, storage, network, and related resource inventory.
 - Sign in as **Dwight Schrute** to review, add, edit, and enable/disable security and compliance policy records. The public-ingress policy is wired to the demo provisioning gate; the other entries are illustrative policy records.
+- **US-09 — Automated Secret & Credential Management:** A vault-reference-only simulation tracks connection, secure injection, least-privilege access, and test-injection outcomes. Plaintext secrets are never generated or displayed.
+- **US-12 — System Audit Logging & Compliance Reporting:** Compliance Auditors can filter chronological event records and export complete simulated CSV or JSON reports for review.
 
 Other stories are shown as future capabilities in `architecture.drawio`; they are not implemented in this demo.
 

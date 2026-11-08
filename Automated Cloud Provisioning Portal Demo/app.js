@@ -367,9 +367,9 @@
     el("total-estimate").textContent = `$${totalCost.toFixed(2)} estimated for ${days} days`;
     const approvalPolicy = state.policies.find((policy) => policy.id === "cost-governance");
     el("cost-governance-note").textContent = approvalPolicy?.enabled
-      ? `Demo estimate · manager approval required above $${MONTHLY_APPROVAL_THRESHOLD}/month`
-      : "Demo estimate · monthly budget approval policy disabled";
-    el("submit-request").innerHTML = approvalPolicy?.enabled && monthlyCost > MONTHLY_APPROVAL_THRESHOLD
+      ? `Demo estimate · manager approval required above $${APPROVAL_TOTAL_THRESHOLD} projected lifecycle cost`
+      : "Demo estimate · lifecycle budget approval policy disabled";
+    el("submit-request").innerHTML = approvalPolicy?.enabled && totalCost > APPROVAL_TOTAL_THRESHOLD
       ? 'Run checks &amp; request approval <span aria-hidden="true">→</span>'
       : 'Run checks &amp; provision <span aria-hidden="true">→</span>';
   }
