@@ -139,7 +139,7 @@
         <mxCell id="monitor" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Health &amp; drift monitor · US-10&lt;/b&gt;&lt;br&gt;Detect configuration drift; notify owners" vertex="1">
           <mxGeometry height="72" width="190" x="810" y="490" as="geometry" />
         </mxCell>
-        <mxCell id="audit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#AAB6C6;fontColor=#46566D;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Audit event service · US-12&lt;/b&gt;&lt;br&gt;Record request, approval, change, delete" vertex="1">
+        <mxCell id="audit" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EAF1FF;strokeColor=#6C8DE8;fontColor=#294FAD;fontSize=12;align=left;spacing=12;arcSize=8;" value="&lt;b&gt;Audit event service · US-12&lt;/b&gt;&lt;br&gt;Record request, approval, change, delete" vertex="1">
           <mxGeometry height="72" width="195" x="598" y="595" as="geometry" />
         </mxCell>
         <mxCell id="service-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0F4FA;strokeColor=#DCE3ED;fontColor=#63728A;fontSize=11;align=center;arcSize=8;" value="Automated workflow:&lt;br&gt;authenticate → authorize → estimate / approve → scan → deploy → manage lifecycle&lt;br&gt;&lt;br&gt;Events feed monitoring, audit and reporting" vertex="1">

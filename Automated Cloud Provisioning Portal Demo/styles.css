@@ -172,6 +172,21 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .button-approve { border: 1px solid #ccebdc; color: #176e51; background: #eaf8f1; }
 .button-reject { border: 1px solid #f1d9dc; color: #9f3541; background: #fff0f1; }
 .security-policies-panel { margin-top: 18px; }
+.audit-logs-panel { margin-top: 18px; }
+.audit-logs-panel .panel-heading { margin-bottom: 10px; }
+.audit-heading-actions { display: flex; align-items: center; gap: 9px; }
+.audit-note { margin: 0 0 15px; color: #8793a4; font-size: 10px; line-height: 1.5; }
+.audit-filters { display: grid; grid-template-columns: minmax(150px, .35fr) minmax(220px, 1fr); gap: 12px; margin-bottom: 14px; }
+.audit-filters label { margin: 0; color: #64748a; font-size: 10px; }
+.audit-filters select, .audit-filters input { display: block; margin-top: 5px; }
+.audit-log-table { min-width: 1050px; }
+.audit-log-table td { vertical-align: top; }
+.audit-actor { display: block; color: #34465f; font-weight: 700; }
+.audit-details { min-width: 230px; max-width: 360px; color: #617087; line-height: 1.5; overflow-wrap: anywhere; }
+.audit-action { display: inline-block; padding: 4px 7px; border-radius: 12px; background: #edf2ff; color: #4265c4; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.audit-action-deleted { color: #a43d49; background: #fff0f1; }
+.audit-action-modified { color: #886114; background: #fff5df; }
+.audit-outcome { color: #53637a; }
 .security-policies-panel .panel-heading { margin-bottom: 9px; }
 .policy-intro { max-width: 760px; margin-bottom: 17px; color: #728096; font-size: 11px; line-height: 1.6; }
 .security-policy-list { display: grid; gap: 9px; }
@@ -226,10 +241,12 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
   .owner-dashboard .panel-heading { align-items: flex-start; flex-direction: column; }
   .dashboard-filter { width: 100%; justify-content: space-between; }
   .dashboard-filter select { flex: 1; }
+  .audit-filters { grid-template-columns: 1fr; }
+  .audit-heading-actions { width: 100%; justify-content: space-between; }
   .form-row { gap: 8px; }
   .security-policy-card { align-items: flex-start; flex-direction: column; gap: 8px; }
   .policy-editor .form-row { grid-template-columns: 1fr; }
-  .environment-table th:nth-child(3), .environment-table td:nth-child(3) { display: none; }
+  .environment-table:not(.audit-log-table) th:nth-child(3), .environment-table:not(.audit-log-table) td:nth-child(3) { display: none; }
   .environment-table th, .environment-table td { padding-left: 5px; padding-right: 5px; }
   .page-footer { flex-wrap: wrap; }
 }
