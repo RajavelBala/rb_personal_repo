@@ -36,7 +36,7 @@
           <span><i class="point-icon point-green"></i>Policy-checked launches</span>
           <span><i class="point-icon point-violet"></i>Automatic expiration</span>
         </div>
-        <p class="demo-note">Interactive class demo · Sprint 1 scope · Cloud resources are simulated</p>
+        <p class="demo-note">Interactive class demo · Sprint 2 scope · Cloud resources and vault operations are simulated</p>
       </div>
       <section class="login-card" aria-labelledby="login-title">
         <div class="card-icon" aria-hidden="true">↗</div>
@@ -61,7 +61,7 @@
 
       <section class="sprint-scope" aria-labelledby="sprint-scope-title">
         <div class="sprint-scope-heading">
-          <p class="eyebrow">SPRINT 1 REVIEW SCOPE</p>
+          <p class="eyebrow">SPRINT 2 REVIEW SCOPE</p>
           <h2 id="sprint-scope-title">Governed self-service provisioning</h2>
         </div>
         <div class="sprint-scope-list">
@@ -72,6 +72,8 @@
           <span><strong>US-05</strong> TTL &amp; cost governance</span>
           <span><strong>US-06</strong> Policy scanning</span>
           <span><strong>US-07</strong> Resource dashboard</span>
+          <span><strong>US-09</strong> Secret vault</span>
+          <span><strong>US-12</strong> Audit reporting</span>
         </div>
       </section>
 
@@ -81,6 +83,7 @@
       <section id="owner-dashboard" class="panel owner-dashboard hidden" aria-labelledby="owner-dashboard-title">
         <div class="panel-heading">
           <div><p class="eyebrow">US-07 · MULTI-CLOUD OPERATIONS</p><h2 id="owner-dashboard-title">Centralized resource dashboard</h2></div>
+          <div class="dashboard-filter-bar">
           <label class="dashboard-filter" for="owner-cloud-filter">Cloud provider
             <select id="owner-cloud-filter">
               <option value="all">All providers</option>
@@ -89,6 +92,11 @@
               <option value="gcp">GCP</option>
             </select>
           </label>
+          <label class="dashboard-filter" for="owner-health-filter">Health
+            <select id="owner-health-filter"><option value="all">All health</option><option value="healthy">Healthy</option><option value="degraded">Degraded</option><option value="offline">Offline</option></select>
+          </label>
+          <input id="owner-search-filter" class="compact-input" placeholder="Search environment, owner, team">
+          </div>
         </div>
         <p class="dashboard-note">Health reflects simulated deployment and expiration state; cost figures are demo estimates, not live cloud telemetry.</p>
         <div id="owner-dashboard-metrics" class="dashboard-metrics"></div>
@@ -142,6 +150,15 @@
                 <span id="cost-governance-note" class="estimate-disclaimer">Demo estimate · not live pricing</span>
               </div>
             </div>
+            <section class="vault-config" aria-labelledby="vault-config-title">
+              <div class="section-label"><strong id="vault-config-title">US-09 · Credential &amp; secret vault</strong><span class="simulated-label">SIMULATED</span></div>
+              <label for="vault-path">Enterprise vault path</label>
+              <input id="vault-path" value="kv/teams/team-atlas/environments" maxlength="120" aria-describedby="vault-help">
+              <p id="vault-help" class="field-hint">A reference only: no credential value is generated, displayed, or stored in this browser.</p>
+              <label class="checkbox-label" for="vault-least-privilege"><input id="vault-least-privilege" type="checkbox" checked><span>Apply least-privilege workload access policy</span></label>
+            </section>
+            <details class="cost-breakdown"><summary>View cost breakdown</summary><div id="cost-breakdown-content"></div></details>
+            <div id="approval-routing-banner" class="approval-routing-banner" aria-live="polite"></div>
             <label class="checkbox-label" for="public-ingress">
               <input id="public-ingress" name="publicIngress" type="checkbox">
               <span>Allow public inbound access <small>Included to demonstrate a policy violation</small></span>
@@ -158,6 +175,12 @@
           <span id="environment-count" class="count-pill">0 ENVIRONMENTS</span>
         </div>
         <div id="environment-list"></div>
+      </section>
+      <section id="audit-section" class="panel audit-panel hidden" aria-labelledby="audit-title">
+        <div class="panel-heading"><div><p class="eyebrow">US-12 · COMPLIANCE EVIDENCE</p><h2 id="audit-title">System audit log</h2></div><div class="audit-actions"><button id="export-audit-csv" class="button-secondary" type="button">Export CSV</button><button id="export-audit-json" class="button button-primary" type="button">Export JSON</button></div></div>
+        <p class="dashboard-note">Immutable simulated records; event details never contain secret values.</p>
+        <div class="audit-filters"><input id="audit-search" placeholder="Resource ID, environment, or actor"><select id="audit-action-filter"><option value="all">All actions</option><option value="REQUESTED">Requested</option><option value="APPROVED">Approved</option><option value="MODIFIED">Modified</option><option value="DELETED">Deleted</option><option value="SECRET_INJECTED">Secret injected</option></select><select id="audit-team-filter"><option value="all">All teams</option></select><input id="audit-date-filter" type="date" aria-label="Events on or after date"></div>
+        <div id="audit-list"></div>
       </section>
       <section id="security-policy-section" class="panel security-policies-panel hidden" aria-labelledby="security-policies-title">
         <div class="panel-heading">

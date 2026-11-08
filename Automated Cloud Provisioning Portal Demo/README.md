@@ -1,5 +1,12 @@
 # Automated Cloud Provisioning Portal Demo
 
+## Sprint 2 additions
+
+- **US-03 Cost estimation & approval:** lifecycle projections update as blueprint and TTL change; requests over the simulated $200 total lifecycle budget route to the requester's team manager.
+- **US-07 Centralized operations:** the Application Owner dashboard supports cloud, health, and free-text environment/owner/team filtering, with estimated daily and 30-day cost context.
+- **US-09 Secret management:** the portal simulates encrypted secret injection using a vault reference only. It never creates, displays, stores, or exports plaintext credentials. Environment records include a non-secret reference path, least-privilege status, rotation schedule, and a permission-only test action.
+- **US-12 Audit reporting:** the Compliance Auditor role can filter immutable simulated events and export complete CSV or JSON reports. Audit payloads intentionally omit secret values.
+
 A local, dependency-free browser demo of the stories prioritized for the first Sprint Review: US-01, US-02, US-03, US-04, US-05, US-06, and US-07. It simulates identity, policy checks, cloud provisioning, cost estimation and approval routing, resource expiration, and an enterprise-wide multi-cloud resource dashboard; it does not connect to an identity provider, cloud account, or secret vault.
 
 ## Run on Windows

@@ -1,8 +1,10 @@
 (() => {
   "use strict";
 
-  const STORAGE_KEY = "abc-cloud-launchpad-demo-v1";
-  const MONTHLY_APPROVAL_THRESHOLD = 500;
+  const STORAGE_KEY = "abc-cloud-launchpad-demo-v2";
+  const APPROVAL_TOTAL_THRESHOLD = 200;
+  // Retained only for compatibility with prior saved policy copy; routing uses total lifecycle cost.
+  const MONTHLY_APPROVAL_THRESHOLD = APPROVAL_TOTAL_THRESHOLD;
   const users = [
     { id: "ava", name: "Jim Halpert", role: "Developer", team: "Team Atlas", initials: "JH" },
     { id: "ron", name: "Oscar Martinez", role: "Developer", team: "Team Atlas", initials: "OM" },
@@ -10,6 +12,7 @@
     { id: "noah", name: "Pam Beesly", role: "Developer", team: "Team Nova", initials: "PB" },
     { id: "andy", name: "Andy Bernard", role: "Manager", team: "Team Nova", initials: "AB" },
     { id: "sam", name: "Dwight Schrute", role: "Security Administrator", team: "Enterprise Security", initials: "DS" },
+    { id: "angela", name: "Angela Martin", role: "Compliance Auditor", team: "Governance", initials: "AM" },
     { id: "robert", name: "Robert California", role: "Application Owner", team: "Platform Operations", initials: "RC" }
   ];
 
@@ -28,7 +31,7 @@
         { id: "us-west-2", name: "US West (Oregon)" },
         { id: "eu-west-1", name: "EU West (Ireland)" }
       ],
-      dailyRates: { node: 4.82, python: 8.64, kubernetes: 18.2 }
+      dailyRates: { node: 4.82, python: 8.64, kubernetes: 12.48 }
     },
     azure: {
       name: "Azure",
@@ -38,7 +41,7 @@
         { id: "westus2", name: "West US 2 (Washington)" },
         { id: "westeurope", name: "West Europe (Netherlands)" }
       ],
-      dailyRates: { node: 5.06, python: 9.12, kubernetes: 19.1 }
+      dailyRates: { node: 4.82, python: 8.64, kubernetes: 12.48 }
     },
     gcp: {
       name: "GCP",
@@ -48,7 +51,7 @@
         { id: "us-west1", name: "US West (Oregon)" },
         { id: "europe-west1", name: "Europe West (Belgium)" }
       ],
-      dailyRates: { node: 4.61, python: 8.27, kubernetes: 17.25 }
+      dailyRates: { node: 4.82, python: 8.64, kubernetes: 12.48 }
     }
   };
 
@@ -80,7 +83,7 @@
     { id: "block-public-ingress", name: "Block public inbound access", category: "Network security", description: "Prevent public inbound access on demo environments.", enabled: true },
     { id: "approved-regions", name: "Approved cloud regions", category: "Compliance", description: "Provision only in approved provider regions.", enabled: true },
     { id: "environment-ttl", name: "Maximum environment lifetime", category: "Lifecycle", description: "Limit sandbox and test environment lifetime to 90 days.", enabled: true },
-    { id: "cost-governance", name: "Monthly budget approval", category: "Compliance", description: "Route requests above $500 per month to the requester's team manager before provisioning.", enabled: true },
+    { id: "cost-governance", name: "Lifecycle budget approval", category: "Compliance", description: "Route requests above $200 total projected lifecycle cost to the requester's team manager before provisioning.", enabled: true },
     { id: "team-access", name: "Team-scoped access", category: "Access control", description: "Limit developer access to resources belonging to their assigned team.", enabled: true },
     { id: "encrypted-storage", name: "Encrypt environment storage", category: "Data protection", description: "Require encryption for attached and persistent storage.", enabled: true }
   ];
@@ -148,12 +151,13 @@
           resources: Array.isArray(item.resources) ? item.resources : ["blocked", "pending-approval", "rejected"].includes(item.status) ? [] : resourceInventories[item.templateId],
           policyReasons: Array.isArray(item.policyReasons) ? item.policyReasons.filter((reason) => typeof reason === "string") : []
         })) : [],
+        auditEvents: Array.isArray(parsed.auditEvents) ? parsed.auditEvents.filter((event) => event && typeof event.id === "string") : [],
         clockOffsetMs: Number.isFinite(parsed.clockOffsetMs) && parsed.clockOffsetMs >= 0 ? parsed.clockOffsetMs : 0,
         policyMessage: null
       };
     } catch (error) {
       console.error("Unable to load saved demo data.", error);
-      return { currentUserId: null, selectedTemplateId: "node", selectedProviderId: "aws", policies: loadPolicies([]), environments: [], clockOffsetMs: 0, policyMessage: null };
+      return { currentUserId: null, selectedTemplateId: "node", selectedProviderId: "aws", policies: loadPolicies([]), environments: [], auditEvents: [], clockOffsetMs: 0, policyMessage: null };
     }
   }
 
@@ -169,6 +173,7 @@
         selectedProviderId: state.selectedProviderId,
         policies: state.policies,
         environments: state.environments,
+        auditEvents: state.auditEvents,
         clockOffsetMs: state.clockOffsetMs
       }));
     } catch (error) {
@@ -180,6 +185,29 @@
   function setNotice(message, type = "info") {
     notice = { message, type };
     renderNotice();
+  }
+
+  function nowIso() {
+    return new Date(Date.now() + state.clockOffsetMs).toISOString();
+  }
+
+  function recordAudit(action, environment, outcome, detail = "") {
+    const actor = currentUser() || { id: "system", name: "Lifecycle service", role: "System" };
+    state.auditEvents.unshift({
+      id: globalThis.crypto?.randomUUID ? crypto.randomUUID() : `audit-${Date.now()}-${Math.random()}`,
+      timestamp: nowIso(),
+      actorId: actor.id,
+      actor: actor.name,
+      role: actor.role,
+      action,
+      resourceId: environment?.id || "—",
+      environment: environment?.name || "—",
+      team: environment?.team || actor.team || "System",
+      provider: environment?.providerId || "—",
+      outcome,
+      detail
+    });
+    state.auditEvents = state.auditEvents.slice(0, 1000);
   }
 
   function renderNotice() {
@@ -243,6 +271,7 @@
       if (remaining <= 0) {
         environment.status = "decommissioned";
         environment.decommissionedAt = new Date(now).toISOString();
+        recordAudit("DELETED", environment, "TTL_EXPIRED", "Environment automatically decommissioned at configured TTL.");
         expired += 1;
       } else if (remaining <= 24 * 60 * 60 * 1000 && !environment.expirationAlerted) {
         environment.expirationAlerted = true;
@@ -313,6 +342,7 @@
     lifetime.innerHTML = [30, 60, 90].filter((days) => days <= template.maxDays)
       .map((days) => `<option value="${days}" ${days === template.defaultDays ? "selected" : ""}>${days} day${days === 1 ? "" : "s"}</option>`).join("");
     updateCostEstimate();
+    renderLifecycleCostControls();
   }
 
   function renderRegions() {
@@ -331,9 +361,10 @@
     const days = Number(el("lifetime").value) || template.defaultDays;
     const dailyCost = provider.dailyRates[template.id];
     const monthlyCost = dailyCost * 30;
+    const totalCost = dailyCost * days;
     el("daily-estimate").innerHTML = `$${dailyCost.toFixed(2)} <small>/ day</small>`;
     el("monthly-estimate").textContent = `$${monthlyCost.toFixed(2)} estimated per month`;
-    el("total-estimate").textContent = `$${(dailyCost * days).toFixed(2)} estimated for ${days} days`;
+    el("total-estimate").textContent = `$${totalCost.toFixed(2)} estimated for ${days} days`;
     const approvalPolicy = state.policies.find((policy) => policy.id === "cost-governance");
     el("cost-governance-note").textContent = approvalPolicy?.enabled
       ? `Demo estimate · manager approval required above $${MONTHLY_APPROVAL_THRESHOLD}/month`
@@ -341,6 +372,21 @@
     el("submit-request").innerHTML = approvalPolicy?.enabled && monthlyCost > MONTHLY_APPROVAL_THRESHOLD
       ? 'Run checks &amp; request approval <span aria-hidden="true">→</span>'
       : 'Run checks &amp; provision <span aria-hidden="true">→</span>';
+  }
+
+  function renderLifecycleCostControls() {
+    const template = selectedTemplate();
+    const days = Number(el("lifetime").value) || template.defaultDays;
+    const total = providers[state.selectedProviderId].dailyRates[template.id] * days;
+    const needsApproval = Boolean(state.policies.find((policy) => policy.id === "cost-governance")?.enabled && total > APPROVAL_TOTAL_THRESHOLD);
+    el("submit-request").innerHTML = needsApproval
+      ? 'Submit for approval <span aria-hidden="true">→</span>'
+      : 'Run checks &amp; provision <span aria-hidden="true">→</span>';
+    el("approval-routing-banner").classList.toggle("requires-approval", needsApproval);
+    el("approval-routing-banner").textContent = needsApproval
+      ? `Manager approval required: $${total.toFixed(2)} projected lifecycle cost exceeds $${APPROVAL_TOTAL_THRESHOLD}. Routes to ${teamManager(currentUser()?.team)?.name || "the assigned team manager"}.`
+      : `Auto-approved: $${total.toFixed(2)} projected lifecycle cost is within the $${APPROVAL_TOTAL_THRESHOLD} pre-approved budget.`;
+    el("cost-breakdown-content").innerHTML = `<span>Compute & runtime: $${(total * .65).toFixed(2)}</span><span>Persistent storage (30 GB SSD): $${(total * .2).toFixed(2)}</span><span>Networking & egress: $${(total * .15).toFixed(2)}</span>`;
   }
 
   function renderPolicyResult() {
@@ -389,6 +435,9 @@
             <summary>View resources (${resources.length})</summary>
             <ul>${resources.map((resource) => `<li><strong>${escapeHTML(resource.name)}</strong><span>${escapeHTML(resource.detail)}</span></li>`).join("")}</ul>
           </details>`;
+      const vaultDetails = environment.secretRef
+        ? '<div class="resource-empty"><strong>Vault reference</strong><span>' + escapeHTML(environment.secretRef) + '</span><span>' + escapeHTML(environment.secretStatus || "Pending") + '</span><button class="text-button" type="button" data-test-vault="' + escapeHTML(environment.id) + '">Test injection</button></div>'
+        : "";
       const approvalActions = status === "pending-approval" && canApprove(user, environment)
         ? `<div class="approval-actions"><button type="button" class="button button-approve" data-approve="${escapeHTML(environment.id)}">Approve &amp; provision</button><button type="button" class="button button-reject" data-reject="${escapeHTML(environment.id)}">Reject</button></div>`
         : "";
@@ -397,7 +446,7 @@
         <td><span class="status-badge status-${escapeHTML(status)}">${escapeHTML(statusLabels[status])}</span><span class="env-meta">${detail}</span>${approvalActions}</td>
         <td class="owner-cell">${escapeHTML(owner ? owner.name : "Unknown")}<span class="env-meta">${escapeHTML(environment.team)}</span></td>
         <td>${escapeHTML(environment.lifetimeDays)} days<span class="env-meta">$${Number(environment.dailyCost).toFixed(2)} / day · $${(Number(environment.dailyCost) * 30).toFixed(2)} / month</span></td>
-        <td>${resourceDetails}</td>
+        <td>${resourceDetails}${vaultDetails}</td>
       </tr>`;
     }).join("");
 
@@ -412,6 +461,16 @@
     el("environment-list").querySelectorAll("[data-reject]").forEach((button) => {
       button.addEventListener("click", () => handleApprovalDecision(button.dataset.reject, false));
     });
+    el("environment-list").querySelectorAll("[data-test-vault]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const environment = state.environments.find((item) => item.id === button.dataset.testVault);
+        if (!environment || (user.id !== environment.ownerId && user.role !== "Security Administrator")) return setNotice("Only the environment owner or Security Administrator can validate vault access.", "warning");
+        recordAudit("MODIFIED", environment, "VAULT_ACCESS_VERIFIED", "Least-privilege reference access verified; secret value was not retrieved.");
+        saveState();
+        setNotice("Vault reference and workload permission scope validated. No secret value was displayed.", "success");
+        renderWorkspace(user);
+      });
+    });
   }
 
   function renderOwnerDashboard(user) {
@@ -422,10 +481,14 @@
 
     const filter = el("owner-cloud-filter");
     const selectedProvider = filter.value || "all";
+    const selectedHealth = el("owner-health-filter").value || "all";
+    const search = el("owner-search-filter").value.trim().toLowerCase();
     const environments = state.environments
       .map((environment) => ({ environment, status: lifecycleStatus(environment) }))
       .filter(({ status }) => ["provisioning", "provisioned", "expiring"].includes(status))
       .filter(({ environment }) => selectedProvider === "all" || environment.providerId === selectedProvider)
+      .filter(({ status }) => selectedHealth === "all" || (selectedHealth === "healthy" && status === "provisioned") || (selectedHealth === "degraded" && status === "expiring") || (selectedHealth === "offline" && status === "provisioning"))
+      .filter(({ environment }) => !search || `${environment.name} ${environment.team} ${environmentOwner(environment)?.name || ""}`.toLowerCase().includes(search))
       .sort((a, b) => b.environment.createdAt.localeCompare(a.environment.createdAt));
     const dailyCost = environments.reduce((total, { environment }) => total + Number(environment.dailyCost || 0), 0);
     const attentionCount = environments.filter(({ status }) => status !== "provisioned").length;
@@ -445,14 +508,14 @@
     const rows = environments.map(({ environment, status }) => {
       const provider = providers[environment.providerId] || providers.aws;
       const owner = environmentOwner(environment);
-      const health = status === "provisioning" ? "Provisioning" : status === "expiring" ? "Expiring soon" : "Operational";
+      const health = status === "provisioning" ? "Offline · deploying" : status === "expiring" ? "Degraded · expiring soon" : "Healthy";
       const healthClass = status === "expiring" ? "attention" : status === "provisioning" ? "pending" : "healthy";
       return `<tr>
         <td><span class="env-name">${escapeHTML(environment.name)}</span><span class="env-meta">${escapeHTML(environment.region)}</span></td>
         <td><span class="cloud-account">${escapeHTML(provider.name)}</span><span class="env-meta">${escapeHTML(provider.account)}</span></td>
         <td><span class="dashboard-health health-${healthClass}"><i aria-hidden="true"></i>${health}</span><span class="env-meta">Expires ${formatDate(environment.expiresAt)}</span></td>
         <td class="owner-cell">${escapeHTML(owner ? owner.name : "Unknown")}<span class="env-meta">${escapeHTML(environment.team)}${owner ? ` · ${escapeHTML(owner.role)}` : ""}</span></td>
-        <td>${formatCost(Number(environment.dailyCost || 0))}<span class="env-meta">per day</span></td>
+        <td>${formatCost(Number(environment.dailyCost || 0))}<span class="env-meta">per day · $${(Number(environment.dailyCost || 0) * 30).toFixed(2)} MTD</span></td>
       </tr>`;
     }).join("");
 
@@ -586,6 +649,11 @@
     environment.provisionedAt = new Date(startedAt).toISOString();
     environment.expiresAt = new Date(startedAt + environment.lifetimeDays * 24 * 60 * 60 * 1000).toISOString();
     environment.resources = resourceInventories[environment.templateId];
+    environment.secretStatus = "Vault connection verified · encrypted injection in progress";
+    environment.secretGeneratedAt = nowIso();
+    environment.rotationSchedule = "Automatic rotation every 30 days (simulated)";
+    environment.secretRef = `${environment.vaultPath || `kv/teams/${environment.team.toLowerCase().replace(/\s+/g, "-")}`}/${environment.name}/app-credentials`;
+    recordAudit("MODIFIED", environment, "STARTED", "Provisioning initiated; secret values are never persisted in portal state.");
     saveState();
     const user = currentUser();
     if (user) renderWorkspace(user);
@@ -593,6 +661,9 @@
       const pending = state.environments.find((item) => item.id === environment.id);
       if (pending && pending.status === "provisioning") {
         pending.status = "provisioned";
+        pending.secretStatus = "Injected · least-privilege workload policy active";
+        recordAudit("SECRET_INJECTED", pending, "SUCCESS", `Encrypted secret reference created at ${pending.secretRef}; plaintext omitted.`);
+        recordAudit("MODIFIED", pending, "SUCCESS", "Provisioning completed.");
         saveState();
         reconcileLifecycle();
         const activeUser = currentUser();
@@ -612,10 +683,12 @@
     environment.managerDecisionBy = user.name;
     environment.managerDecisionAt = new Date(Date.now() + state.clockOffsetMs).toISOString();
     if (approved) {
+      recordAudit("APPROVED", environment, "APPROVED", "Manager approval recorded; provisioning and encrypted vault injection will begin.");
       beginProvisioning(environment);
       setNotice(`${environment.name} was approved by ${user.name} and provisioning has started.`, "success");
     } else {
       environment.status = "rejected";
+      recordAudit("APPROVED", environment, "REJECTED", "Manager rejected lifecycle budget approval.");
       saveState();
       renderWorkspace(user);
       setNotice(`${environment.name} was rejected by ${user.name}; no resources were created.`, "info");
@@ -669,8 +742,9 @@
 
     const dailyCost = providers[data.providerId].dailyRates[template.id];
     const monthlyCost = dailyCost * 30;
+    const projectedCost = dailyCost * data.lifetimeDays;
     const approvalPolicy = state.policies.find((policy) => policy.id === "cost-governance");
-    const requiresApproval = Boolean(approvalPolicy?.enabled && monthlyCost > MONTHLY_APPROVAL_THRESHOLD);
+    const requiresApproval = Boolean(approvalPolicy?.enabled && projectedCost > APPROVAL_TOTAL_THRESHOLD);
     const manager = teamManager(user.team);
     if (requiresApproval && !manager) {
       state.policyMessage = { pass: false, messages: [`No budget manager is configured for ${user.team}; this request cannot be routed.`] };
@@ -694,26 +768,66 @@
       status: requiresApproval ? "pending-approval" : "provisioning",
       publicIngress: data.publicIngress,
       expirationAlerted: false,
-      approvalManagerId: requiresApproval ? manager.id : null
+      approvalManagerId: requiresApproval ? manager.id : null,
+      vaultPath: el("vault-path").value.trim().replace(/\/+$/, "") || `kv/teams/${user.team.toLowerCase().replace(/\s+/g, "-")}`,
+      leastPrivilege: el("vault-least-privilege").checked,
+      secretStatus: requiresApproval ? "Queued until budget approval" : "Queued for encrypted vault injection"
     };
     state.environments.push(environment);
+    recordAudit("REQUESTED", environment, requiresApproval ? "PENDING_APPROVAL" : "ACCEPTED", `Projected lifecycle cost: $${projectedCost.toFixed(2)}. Vault reference only; no plaintext credentials retained.`);
     el("request-form").reset();
     el("environment-name").value = "";
     el("public-ingress").checked = false;
     if (requiresApproval) {
       state.policyMessage = {
         pass: true,
-        messages: [`Policy checks passed. Estimated monthly cost is $${monthlyCost.toFixed(2)}, above the $${MONTHLY_APPROVAL_THRESHOLD.toFixed(2)} threshold. Routed to ${manager.name} for approval; provisioning will start only if approved.`]
+        messages: [`Policy checks passed. Projected lifecycle cost is $${projectedCost.toFixed(2)}, above the $${APPROVAL_TOTAL_THRESHOLD.toFixed(2)} threshold. Routed to ${manager.name} for approval; provisioning will start only if approved.`]
       };
       saveState();
       renderWorkspace(user);
     } else {
-      const routingMessage = monthlyCost > MONTHLY_APPROVAL_THRESHOLD
-        ? `Estimated monthly cost is $${monthlyCost.toFixed(2)}, but the monthly budget approval policy is disabled.`
-        : `Estimated monthly cost is $${monthlyCost.toFixed(2)}, within the $${MONTHLY_APPROVAL_THRESHOLD.toFixed(2)} threshold.`;
+      const routingMessage = projectedCost > APPROVAL_TOTAL_THRESHOLD
+        ? `Projected lifecycle cost is $${projectedCost.toFixed(2)}, but the budget approval policy is disabled.`
+        : `Projected lifecycle cost is $${projectedCost.toFixed(2)}, within the $${APPROVAL_TOTAL_THRESHOLD.toFixed(2)} threshold.`;
       state.policyMessage = { pass: true, messages: [`Policy checks passed. ${routingMessage} Provisioning started without additional approval.`] };
       beginProvisioning(environment);
     }
+  }
+
+  function auditVisibleTo(user, event) {
+    return user?.role === "Compliance Auditor" || user?.role === "Security Administrator" || user?.role === "Application Owner" || event.team === user?.team;
+  }
+
+  function renderAudit(user) {
+    const section = el("audit-section");
+    const allowed = ["Compliance Auditor", "Security Administrator", "Application Owner"].includes(user.role);
+    section.classList.toggle("hidden", !allowed);
+    if (!allowed) return;
+    const teamFilter = el("audit-team-filter");
+    const selectedTeam = teamFilter.value || "all";
+    teamFilter.innerHTML = '<option value="all">All teams</option>' + [...new Set(state.auditEvents.map((event) => event.team).filter(Boolean))].sort().map((team) => `<option value="${escapeHTML(team)}">${escapeHTML(team)}</option>`).join("");
+    teamFilter.value = [...teamFilter.options].some((option) => option.value === selectedTeam) ? selectedTeam : "all";
+    const search = el("audit-search").value.trim().toLowerCase();
+    const action = el("audit-action-filter").value;
+    const date = el("audit-date-filter").value;
+    const events = state.auditEvents.filter((event) => auditVisibleTo(user, event))
+      .filter((event) => action === "all" || event.action === action)
+      .filter((event) => teamFilter.value === "all" || event.team === teamFilter.value)
+      .filter((event) => !date || event.timestamp.slice(0, 10) >= date)
+      .filter((event) => !search || `${event.resourceId} ${event.environment} ${event.actor} ${event.team}`.toLowerCase().includes(search));
+    el("audit-list").innerHTML = events.length ? `<div class="table-scroll"><table class="environment-table audit-table"><thead><tr><th>Timestamp (UTC)</th><th>Actor / role</th><th>Action</th><th>Resource / environment</th><th>Team / cloud</th><th>Outcome</th></tr></thead><tbody>${events.map((event) => `<tr><td>${escapeHTML(event.timestamp)}</td><td>${escapeHTML(event.actor)}<small>${escapeHTML(event.role)}</small></td><td><strong>${escapeHTML(event.action)}</strong></td><td>${escapeHTML(event.resourceId)}<small>${escapeHTML(event.environment)}</small></td><td>${escapeHTML(event.team)}<small>${escapeHTML(event.provider)}</small></td><td><span class="audit-outcome ${event.outcome.includes("REJECT") || event.outcome.includes("EXPIRED") ? "warning" : ""}">${escapeHTML(event.outcome)}</span><small>${escapeHTML(event.detail)}</small></td></tr>`).join("")}</tbody></table></div>` : '<div class="empty-state"><strong>No audit records match these filters</strong>Lifecycle actions will appear here.</div>';
+  }
+
+  function exportAudit(format) {
+    const events = state.auditEvents.filter((event) => auditVisibleTo(currentUser(), event));
+    const columns = ["timestamp", "actorId", "actor", "role", "action", "resourceId", "environment", "team", "provider", "outcome", "detail"];
+    const content = format === "json" ? JSON.stringify(events, null, 2) : [columns.join(","), ...events.map((event) => columns.map((key) => `"${String(event[key] || "").replaceAll('"', '""')}"`).join(","))].join("\r\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([content], { type: format === "json" ? "application/json" : "text/csv" }));
+    link.download = `abc-compliance-audit.${format}`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setNotice(`Compliance audit exported as ${format.toUpperCase()}.`, "success");
   }
 
   function renderWorkspace(user) {
@@ -728,6 +842,7 @@
     renderPolicyResult();
     renderOwnerDashboard(user);
     renderEnvironments(user);
+    renderAudit(user);
     renderSecurityPolicies(user);
     renderNotice();
     el("demo-clock").textContent = `Demo time: ${new Date(Date.now() + state.clockOffsetMs).toLocaleString()}`;
@@ -782,7 +897,14 @@
     updateCostEstimate();
     saveState();
   });
-  el("lifetime").addEventListener("change", updateCostEstimate);
+  el("lifetime").addEventListener("change", () => { updateCostEstimate(); renderLifecycleCostControls(); });
   el("owner-cloud-filter").addEventListener("change", () => renderOwnerDashboard(currentUser()));
+  el("owner-health-filter").addEventListener("change", () => renderOwnerDashboard(currentUser()));
+  el("owner-search-filter").addEventListener("input", () => renderOwnerDashboard(currentUser()));
+  ["audit-search", "audit-action-filter", "audit-team-filter", "audit-date-filter"].forEach((id) => {
+    el(id).addEventListener(id === "audit-search" ? "input" : "change", () => renderAudit(currentUser()));
+  });
+  el("export-audit-csv").addEventListener("click", () => exportAudit("csv"));
+  el("export-audit-json").addEventListener("click", () => exportAudit("json"));
   render();
 })();
