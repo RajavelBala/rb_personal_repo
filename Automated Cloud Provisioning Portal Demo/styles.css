@@ -114,6 +114,15 @@ input:focus, select:focus, textarea:focus { border-color: #7191ed; box-shadow: 0
 .vault-config { margin: 16px 0; padding: 13px; border: 1px solid #d8e5fb; border-radius: 8px; background: #f8fbff; }
 .section-label { display: flex; align-items: center; justify-content: space-between; color: #31599f; font-size: 11px; }
 .simulated-label { padding: 3px 6px; border-radius: 10px; background: #e8efff; color: #496ac1; font-size: 8px; font-weight: 800; letter-spacing: .5px; }
+.vault-status-card { display: grid; gap: 5px; min-width: 190px; max-width: 310px; margin-top: 8px; padding: 9px; border: 1px solid #e1e9f5; border-radius: 7px; background: #f9fbff; line-height: 1.45; }
+.vault-status-heading { display: flex; align-items: center; justify-content: space-between; gap: 7px; color: #31599f; font-size: 9px; }
+.vault-pipeline-status { color: #475b78; font-size: 9px; font-weight: 700; }
+.vault-security-line, .vault-reference, .vault-test-result, .vault-disclaimer { display: block; color: #78869a; font-size: 9px; overflow-wrap: anywhere; }
+.vault-security-line strong, .vault-reference strong { color: #586982; }
+.vault-reference > strong { display: block; }
+.vault-reference code { display: block; margin-top: 3px; padding: 5px; border-radius: 4px; background: #eef3fb; color: #425675; font: 9px "Consolas", monospace; overflow-wrap: anywhere; }
+.vault-test-result { color: #176e51; }
+.vault-disclaimer { padding-top: 4px; border-top: 1px solid #e8edf4; color: #929dad; font-size: 8px; }
 .cost-breakdown { margin: 12px 0; padding: 10px 12px; border: 1px solid #e4eaf3; border-radius: 7px; color: #526179; font-size: 11px; }
 .cost-breakdown summary { cursor: pointer; color: #31599f; font-weight: 700; }
 .cost-breakdown div { display: grid; gap: 4px; margin-top: 9px; }

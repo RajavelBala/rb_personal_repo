@@ -153,8 +153,8 @@
             <section class="vault-config" aria-labelledby="vault-config-title">
               <div class="section-label"><strong id="vault-config-title">US-09 · Credential &amp; secret vault</strong><span class="simulated-label">SIMULATED</span></div>
               <label for="vault-path">Enterprise vault path</label>
-              <input id="vault-path" value="kv/teams/team-atlas/environments" maxlength="120" aria-describedby="vault-help">
-              <p id="vault-help" class="field-hint">A reference only: no credential value is generated, displayed, or stored in this browser.</p>
+              <input id="vault-path" value="kv/teams/team-atlas/environments" maxlength="120" required spellcheck="false" aria-describedby="vault-help">
+              <p id="vault-help" class="field-hint">Choose a path inside your team namespace. The demo simulates generation and encrypted injection but never creates, displays, or stores credential values.</p>
               <label class="checkbox-label" for="vault-least-privilege"><input id="vault-least-privilege" type="checkbox" checked><span>Apply least-privilege workload access policy</span></label>
             </section>
             <details class="cost-breakdown"><summary>View cost breakdown</summary><div id="cost-breakdown-content"></div></details>

@@ -93,6 +93,16 @@
   const escapeHTML = (value) => String(value).replace(/[&<>"']/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   })[character]);
+  const teamSlug = (team) => team.toLowerCase().replace(/\s+/g, "-");
+  const defaultVaultPath = (team) => `kv/teams/${teamSlug(team)}/environments`;
+  const vaultPathPattern = /^kv\/teams\/[a-z0-9-]+\/[a-zA-Z0-9._/-]+$/;
+  const SECRET_ROTATION_DAYS = 30;
+  const SECRET_ENCRYPTION_SUMMARY = "TLS 1.3 in transit · AES-256 at rest (simulated)";
+  const SAFE_VAULT_METADATA = new Set([
+    "secretRef", "secretStatus", "secretEncryption", "secretGeneratedAt",
+    "secretRotationDays", "secretRotationDueAt", "vaultPath",
+    "vaultTestStatus", "vaultTestedAt"
+  ]);
 
   function loadPolicies(savedPolicies) {
     const savedById = new Map(
@@ -143,14 +153,23 @@
           templates.some((template) => template.id === item.templateId) &&
           users.some((user) => user.id === item.ownerId) &&
           ["provisioning", "provisioned", "pending-approval", "rejected", "blocked", "decommissioned"].includes(item.status))
-        .map((item) => ({
-          ...item,
-          status: item.status === "provisioning" ? "provisioned" : item.status,
-          providerId: providers[item.providerId] ? item.providerId : "aws",
-          dailyCost: Number.isFinite(item.dailyCost) ? item.dailyCost : providers.aws.dailyRates[item.templateId],
-          resources: Array.isArray(item.resources) ? item.resources : ["blocked", "pending-approval", "rejected"].includes(item.status) ? [] : resourceInventories[item.templateId],
-          policyReasons: Array.isArray(item.policyReasons) ? item.policyReasons.filter((reason) => typeof reason === "string") : []
-        })) : [],
+        .map((item) => {
+          const environment = { ...item };
+          for (const key of Object.keys(environment)) {
+            if (/secret|credential|password|token|api.?key|private.?key|auth.?key/i.test(key) &&
+              !SAFE_VAULT_METADATA.has(key)) {
+              delete environment[key];
+            }
+          }
+          return {
+            ...environment,
+            status: item.status === "provisioning" ? "provisioned" : item.status,
+            providerId: providers[item.providerId] ? item.providerId : "aws",
+            dailyCost: Number.isFinite(item.dailyCost) ? item.dailyCost : providers.aws.dailyRates[item.templateId],
+            resources: Array.isArray(item.resources) ? item.resources : ["blocked", "pending-approval", "rejected"].includes(item.status) ? [] : resourceInventories[item.templateId],
+            policyReasons: Array.isArray(item.policyReasons) ? item.policyReasons.filter((reason) => typeof reason === "string") : []
+          };
+        }) : [],
         auditEvents: Array.isArray(parsed.auditEvents) ? parsed.auditEvents.filter((event) => event && typeof event.id === "string") : [],
         clockOffsetMs: Number.isFinite(parsed.clockOffsetMs) && parsed.clockOffsetMs >= 0 ? parsed.clockOffsetMs : 0,
         policyMessage: null
@@ -164,6 +183,7 @@
   let state = loadState();
   let notice = null;
   let editingPolicyId = null;
+  let vaultPathDraftUserId = null;
 
   function saveState() {
     try {
@@ -231,6 +251,15 @@
   function canApprove(user, environment) {
     return Boolean(user && user.role === "Manager" && environment &&
       user.team === environment.team && environment.approvalManagerId === user.id);
+  }
+
+  function canViewVaultReference(user, environment) {
+    return Boolean(user && environment && user.id === environment.ownerId);
+  }
+
+  function canTestVaultAccess(user, environment) {
+    return Boolean(user && environment &&
+      (user.id === environment.ownerId || user.role === "Security Administrator"));
   }
 
   function teamManager(team) {
@@ -335,6 +364,13 @@
 
     const template = selectedTemplate();
     el("selected-template").textContent = `${template.name} · Approved blueprint`;
+    const vaultPathInput = el("vault-path");
+    if (vaultPathDraftUserId !== user.id) {
+      vaultPathInput.value = defaultVaultPath(user.team);
+      vaultPathDraftUserId = user.id;
+    } else if (!vaultPathInput.value.trim()) {
+      vaultPathInput.value = defaultVaultPath(user.team);
+    }
     const providerSelect = el("cloud-provider");
     providerSelect.value = state.selectedProviderId;
     renderRegions();
@@ -400,6 +436,59 @@
     return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(value));
   }
 
+  function formatUtc(value) {
+    const timestamp = Date.parse(value);
+    return Number.isFinite(timestamp) ? new Date(timestamp).toISOString() : "Not recorded";
+  }
+
+  function renderVaultDetails(environment, user, status) {
+    if (!environment.secretStatus) return "";
+
+    const injected = ["provisioned", "expiring"].includes(status) && Boolean(environment.secretRef);
+    const canViewReference = injected && canViewVaultReference(user, environment);
+    const canTest = injected && environment.status === "provisioned" && canTestVaultAccess(user, environment);
+    const generatedAt = Date.parse(environment.secretGeneratedAt || "");
+    const nextRotationAt = environment.secretRotationDueAt ||
+      (Number.isFinite(generatedAt)
+        ? new Date(generatedAt + SECRET_ROTATION_DAYS * 24 * 60 * 60 * 1000).toISOString()
+        : null);
+    const rotationDue = nextRotationAt && Date.parse(nextRotationAt) <= Date.now() + state.clockOffsetMs;
+    const encryptionSummary = environment.secretEncryption ||
+      (status === "pending-approval" ? "Not started · waiting for approval" : SECRET_ENCRYPTION_SUMMARY);
+    const rotationState = injected
+      ? `${rotationDue ? "Due" : "Scheduled"} · every ${environment.secretRotationDays || SECRET_ROTATION_DAYS} days (simulated)`
+      : status === "pending-approval"
+        ? "Starts after budget approval"
+        : status === "rejected"
+          ? "Not started · request rejected"
+          : status === "decommissioned"
+            ? "Stopped · environment decommissioned"
+            : "Starts after simulated injection";
+    const reference = canViewReference
+      ? `<span class="vault-reference"><strong>Read-only vault reference</strong><code>${escapeHTML(environment.secretRef)}</code></span>`
+      : injected
+        ? `<span class="vault-reference"><strong>Vault reference</strong><span>Visible to the environment owner only.</span></span>`
+        : "";
+    const testResult = environment.vaultTestStatus
+      ? `<span class="vault-test-result">${escapeHTML(environment.vaultTestStatus)}${environment.vaultTestedAt ? ` · ${formatUtc(environment.vaultTestedAt)}` : ""}</span>`
+      : "";
+    const testButton = canTest
+      ? `<button class="text-button" type="button" data-test-vault="${escapeHTML(environment.id)}">Test vault access</button>`
+      : "";
+
+    return `<section class="vault-status-card" aria-label="Secret management status">
+      <div class="vault-status-heading"><strong>US-09 · Secret pipeline</strong><span class="simulated-label">SIMULATED</span></div>
+      <span class="vault-pipeline-status">${escapeHTML(environment.secretStatus)}</span>
+      <span class="vault-security-line"><strong>Encryption:</strong> ${escapeHTML(encryptionSummary)}</span>
+      ${injected ? `<span class="vault-security-line"><strong>Generated (UTC):</strong> ${formatUtc(environment.secretGeneratedAt)}</span>` : ""}
+      <span class="vault-security-line"><strong>Key rotation:</strong> ${escapeHTML(rotationState)}${nextRotationAt && injected ? ` · next ${formatUtc(nextRotationAt)}` : ""}</span>
+      ${reference}
+      ${testResult}
+      ${testButton}
+      <span class="vault-disclaimer">No plaintext credential values are generated, displayed, or stored by this demo.</span>
+    </section>`;
+  }
+
   function renderEnvironments(user) {
     const environments = visibleEnvironments(user).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     el("environment-heading").textContent = user.role === "Developer" ? "Your team environments" : "Environment requests";
@@ -435,9 +524,7 @@
             <summary>View resources (${resources.length})</summary>
             <ul>${resources.map((resource) => `<li><strong>${escapeHTML(resource.name)}</strong><span>${escapeHTML(resource.detail)}</span></li>`).join("")}</ul>
           </details>`;
-      const vaultDetails = environment.secretRef
-        ? '<div class="resource-empty"><strong>Vault reference</strong><span>' + escapeHTML(environment.secretRef) + '</span><span>' + escapeHTML(environment.secretStatus || "Pending") + '</span><button class="text-button" type="button" data-test-vault="' + escapeHTML(environment.id) + '">Test injection</button></div>'
-        : "";
+      const vaultDetails = renderVaultDetails(environment, user, status);
       const approvalActions = status === "pending-approval" && canApprove(user, environment)
         ? `<div class="approval-actions"><button type="button" class="button button-approve" data-approve="${escapeHTML(environment.id)}">Approve &amp; provision</button><button type="button" class="button button-reject" data-reject="${escapeHTML(environment.id)}">Reject</button></div>`
         : "";
@@ -464,11 +551,25 @@
     el("environment-list").querySelectorAll("[data-test-vault]").forEach((button) => {
       button.addEventListener("click", () => {
         const environment = state.environments.find((item) => item.id === button.dataset.testVault);
-        if (!environment || (user.id !== environment.ownerId && user.role !== "Security Administrator")) return setNotice("Only the environment owner or Security Administrator can validate vault access.", "warning");
-        recordAudit("MODIFIED", environment, "VAULT_ACCESS_VERIFIED", "Least-privilege reference access verified; secret value was not retrieved.");
+        if (!environment || !canTestVaultAccess(currentUser(), environment) || environment.status !== "provisioned" || !environment.secretRef) {
+          setNotice("Only the environment owner or Security Administrator can test access to an injected vault reference.", "warning");
+          return;
+        }
+        if (!environment.leastPrivilege) {
+          environment.vaultTestStatus = "Failed · least-privilege workload policy is not enabled";
+          environment.vaultTestedAt = nowIso();
+          recordAudit("MODIFIED", environment, "VAULT_ACCESS_DENIED", "Simulated access test denied because the least-privilege workload policy is disabled.");
+          saveState();
+          setNotice("Vault access test failed: enable the required least-privilege policy before injection.", "warning");
+          renderWorkspace(currentUser());
+          return;
+        }
+        environment.vaultTestStatus = "Verified · connection and workload-only scope passed (simulated)";
+        environment.vaultTestedAt = nowIso();
+        recordAudit("MODIFIED", environment, "VAULT_ACCESS_VERIFIED", "Simulated connection and least-privilege permission scope verified; no credential value was retrieved.");
         saveState();
-        setNotice("Vault reference and workload permission scope validated. No secret value was displayed.", "success");
-        renderWorkspace(user);
+        setNotice("Vault connection and least-privilege workload scope verified. No credential value was retrieved.", "success");
+        renderWorkspace(currentUser());
       });
     });
   }
@@ -636,6 +737,16 @@
     if (!Number.isInteger(data.lifetimeDays) || !template || data.lifetimeDays < 1 || data.lifetimeDays > template.maxDays) {
       messages.push(`Lifetime must be between 1 and ${template ? template.maxDays : 90} days for this blueprint.`);
     }
+    const teamPathPrefix = `kv/teams/${teamSlug(user.team)}/`;
+    const vaultSegments = data.vaultPath.split("/");
+    if (!vaultPathPattern.test(data.vaultPath) ||
+      !data.vaultPath.startsWith(teamPathPrefix) ||
+      vaultSegments.some((segment) => !segment || segment === "." || segment === "..")) {
+      messages.push(`Vault path must be a valid path within ${teamPathPrefix} for the current team.`);
+    }
+    if (!data.leastPrivilege) {
+      messages.push("Least-privilege workload access must remain enabled for secret injection.");
+    }
     const ingressPolicy = state.policies.find((policy) => policy.id === "block-public-ingress");
     if (data.publicIngress && ingressPolicy?.enabled) {
       messages.push(`${ingressPolicy.name} policy prevents public inbound access.`);
@@ -649,10 +760,11 @@
     environment.provisionedAt = new Date(startedAt).toISOString();
     environment.expiresAt = new Date(startedAt + environment.lifetimeDays * 24 * 60 * 60 * 1000).toISOString();
     environment.resources = resourceInventories[environment.templateId];
-    environment.secretStatus = "Vault connection verified · encrypted injection in progress";
-    environment.secretGeneratedAt = nowIso();
-    environment.rotationSchedule = "Automatic rotation every 30 days (simulated)";
-    environment.secretRef = `${environment.vaultPath || `kv/teams/${environment.team.toLowerCase().replace(/\s+/g, "-")}`}/${environment.name}/app-credentials`;
+    environment.secretStatus = "Vault connection verified · credential generation and encrypted injection in progress (simulated)";
+    environment.secretEncryption = SECRET_ENCRYPTION_SUMMARY;
+    environment.secretRotationDays = SECRET_ROTATION_DAYS;
+    environment.vaultTestStatus = "";
+    environment.vaultTestedAt = "";
     recordAudit("MODIFIED", environment, "STARTED", "Provisioning initiated; secret values are never persisted in portal state.");
     saveState();
     const user = currentUser();
@@ -661,8 +773,11 @@
       const pending = state.environments.find((item) => item.id === environment.id);
       if (pending && pending.status === "provisioning") {
         pending.status = "provisioned";
-        pending.secretStatus = "Injected · least-privilege workload policy active";
-        recordAudit("SECRET_INJECTED", pending, "SUCCESS", `Encrypted secret reference created at ${pending.secretRef}; plaintext omitted.`);
+        pending.secretStatus = "Database/API credential generation and encrypted vault injection complete (simulated).";
+        pending.secretGeneratedAt = nowIso();
+        pending.secretRotationDueAt = new Date(Date.parse(pending.secretGeneratedAt) + SECRET_ROTATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+        pending.secretRef = `${pending.vaultPath}/${pending.name}/app-credentials`;
+        recordAudit("SECRET_INJECTED", pending, "SUCCESS", `Simulated encrypted injection completed at ${pending.secretRef}; no plaintext credentials were generated or stored.`);
         recordAudit("MODIFIED", pending, "SUCCESS", "Provisioning completed.");
         saveState();
         reconcileLifecycle();
@@ -709,7 +824,9 @@
       providerId: el("cloud-provider").value,
       region: el("region").value,
       lifetimeDays: Number(el("lifetime").value),
-      publicIngress: el("public-ingress").checked
+      publicIngress: el("public-ingress").checked,
+      vaultPath: el("vault-path").value.trim().replace(/\/+$/, ""),
+      leastPrivilege: el("vault-least-privilege").checked
     };
     const template = selectedTemplate();
     const result = runPolicyChecks(data, user, template);
@@ -769,15 +886,17 @@
       publicIngress: data.publicIngress,
       expirationAlerted: false,
       approvalManagerId: requiresApproval ? manager.id : null,
-      vaultPath: el("vault-path").value.trim().replace(/\/+$/, "") || `kv/teams/${user.team.toLowerCase().replace(/\s+/g, "-")}`,
-      leastPrivilege: el("vault-least-privilege").checked,
-      secretStatus: requiresApproval ? "Queued until budget approval" : "Queued for encrypted vault injection"
+      vaultPath: data.vaultPath,
+      leastPrivilege: data.leastPrivilege,
+      secretStatus: requiresApproval ? "Queued until budget approval; secret generation has not started." : "Queued for simulated credential generation and vault injection."
     };
     state.environments.push(environment);
     recordAudit("REQUESTED", environment, requiresApproval ? "PENDING_APPROVAL" : "ACCEPTED", `Projected lifecycle cost: $${projectedCost.toFixed(2)}. Vault reference only; no plaintext credentials retained.`);
     el("request-form").reset();
     el("environment-name").value = "";
     el("public-ingress").checked = false;
+    el("vault-path").value = defaultVaultPath(user.team);
+    el("vault-least-privilege").checked = true;
     if (requiresApproval) {
       state.policyMessage = {
         pass: true,
